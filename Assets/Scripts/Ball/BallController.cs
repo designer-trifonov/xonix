@@ -62,14 +62,14 @@ namespace HippoGame.Ball
             if (Vector2.Distance(next, _hippo.position) < HippoHitRadius)
             {
                 Debug.Log("[BallController] Попадание в гиппо!");
-                _interactable.OnBallHit();
+                _interactable.OnBallHit(next);
                 return;
             }
 
             if (_interactable.IsNearTrail(next, TrailHitRadius))
             {
                 Debug.Log("[BallController] Попадание в трейл!");
-                _interactable.OnBallHit();
+                _interactable.OnBallHit(next);
             }
         }
 

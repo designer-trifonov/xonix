@@ -11,10 +11,11 @@ namespace HippoGame.Hippo
     /// Трейл строится атомарно по событиям смены направления — без FPS-зависимости.
     public class HippoGridInteractor : MonoBehaviour, IInitializable, IBallInteractable, IHippoGridInteractor, IDrawingState
     {
-        private IGridService  _grid;
-        private IFillService  _fill;
-        private ITrailService _trail;
-        private Transform     _hippoTransform;
+        private IGridService     _grid;
+        private IFillService     _fill;
+        private ITrailService    _trail;
+        private IParticleService _particles;
+        private Transform        _hippoTransform;
 
         private Vector2Int _lastCell;
         private Vector2Int _segmentStartCell;
@@ -28,11 +29,12 @@ namespace HippoGame.Hippo
         public event Action OnHit;
 
         public void Inject(IGridService grid, IFillService fill, ITrailService trail,
-            Transform hippoTransform, IMovementBehaviour movement)
+            Transform hippoTransform, IMovementBehaviour movement, IParticleService particles = null)
         {
             _grid           = grid;
             _fill           = fill;
             _trail          = trail;
+            _particles      = particles;
             _hippoTransform = hippoTransform;
 
             movement.OnDirectionChanged += OnMovementDirectionChanged;
@@ -141,6 +143,8 @@ namespace HippoGame.Hippo
                         _grid.SetCell(cell.x, cell.y, CellState.Trail);
                     }
 
+                    Vector3 dockWorld = _grid.CellToWorld(cell);
+                    _particles?.PlayDock(new Vector3(dockWorld.x, dockWorld.y, -0.1f));
                     Debug.Log($"[HippoGridInteractor] Трейл ЗАКРЫТ в ({cell.x},{cell.y}) len={_trail.Points.Count}");
 
                     if (_hitInProgress)
@@ -201,11 +205,12 @@ namespace HippoGame.Hippo
             return false;
         }
 
-        public void OnBallHit()
+        public void OnBallHit(Vector2 hitPosition)
         {
             if (!IsVulnerable) return;
 
-            Debug.Log("[HippoGridInteractor] OnBallHit!");
+            Debug.Log($"[HippoGridInteractor] OnBallHit @ {hitPosition}");
+            _particles?.PlayBallHit(new Vector3(hitPosition.x, hitPosition.y, -0.1f));
             ClearTrailCells();
             _trail.Clear();
             _isDrawing     = false;

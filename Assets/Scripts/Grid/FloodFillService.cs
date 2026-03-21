@@ -32,19 +32,15 @@ namespace HippoGame.Grid
 
             if (regions.Count > 0)
             {
-                int maxIdx = 0;
+                int minIdx = 0;
                 for (int i = 1; i < regions.Count; i++)
-                    if (regions[i].Count > regions[maxIdx].Count)
-                        maxIdx = i;
+                    if (regions[i].Count < regions[minIdx].Count)
+                        minIdx = i;
 
-                for (int i = 0; i < regions.Count; i++)
-                {
-                    if (i == maxIdx) continue;
-                    foreach (Vector2Int c in regions[i])
-                        grid.SetCell(c.x, c.y, CellState.Filled);
-                }
+                foreach (Vector2Int c in regions[minIdx])
+                    grid.SetCell(c.x, c.y, CellState.Filled);
 
-                Debug.Log($"[FloodFillService] Регионов={regions.Count} | закрашено {regions.Count - 1} малых");
+                Debug.Log($"[FloodFillService] Регионов={regions.Count} | закрашен наименьший ({regions[minIdx].Count} клеток)");
             }
 
             // Конвертируем все Trail-клетки в Filled по grid-state (не по списку)

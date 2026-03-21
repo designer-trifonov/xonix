@@ -1302,6 +1302,7 @@ Transform:
   - {fileID: 1843766968}
   - {fileID: 1704274174}
   - {fileID: 1624574176}
+  - {fileID: 1665533458}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1004813871
@@ -2034,6 +2035,52 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1665533457
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1665533458}
+  - component: {fileID: 1665533459}
+  m_Layer: 0
+  m_Name: ParticleEffects
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1665533458
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665533457}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 900005375}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1665533459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665533457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3765d4b1c5a0b564d9588e6fa17eb138, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HippoGame.FX.ParticleEffectsService
+  _dockEffect: {fileID: 4149625255499924802, guid: 7eeaa3e3be640bd42b3fb76a6c402296, type: 3}
+  _ballHitEffect: {fileID: 2409275188744700739, guid: ca66497301cef0548a74020c69da9e9b, type: 3}
 --- !u!1 &1704274173
 GameObject:
   m_ObjectHideFlags: 0
@@ -2114,6 +2161,7 @@ MonoBehaviour:
   _gameGrid: {fileID: 2108490905}
   _hippoGridInteractor: {fileID: 1611826699}
   _movementTrail: {fileID: 545414323}
+  _particleEffects: {fileID: 1665533459}
   _ballSpawner: {fileID: 1813795600}
   _livesUI: {fileID: 608648354}
   _scoreUI: {fileID: 1843766969}

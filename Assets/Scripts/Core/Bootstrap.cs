@@ -8,6 +8,7 @@ using HippoGame.Trail;
 using HippoGame.Hippo;
 using HippoGame.Ball;
 using HippoGame.UI;
+using HippoGame.FX;
 
 namespace HippoGame.Core
 {
@@ -22,7 +23,8 @@ namespace HippoGame.Core
         [SerializeField] private HippoController           _hippoController;
         [SerializeField] private GameGrid                  _gameGrid;
         [SerializeField] private HippoGridInteractor       _hippoGridInteractor;
-        [SerializeField] private TrailLineRenderer _movementTrail;
+        [SerializeField] private TrailLineRenderer         _movementTrail;
+        [SerializeField] private ParticleEffectsService    _particleEffects;
         [SerializeField] private BallSpawner               _ballSpawner;
 
         [Header("UI")]
@@ -68,6 +70,8 @@ namespace HippoGame.Core
             container.Register<ITrailService>(new TrailTracker());
             container.Register<IBallSpawner>(_ballSpawner);
             container.Register<IBallInteractable>(_hippoGridInteractor);
+            if (_particleEffects != null)
+                container.Register<IParticleService>(_particleEffects);
             container.Register<HippoGridInteractor>(_hippoGridInteractor);
             container.Register<LevelManager>(new LevelManager());
 
@@ -81,7 +85,7 @@ namespace HippoGame.Core
             var grid  = container.Resolve<IGridService>();
 
             if (_movementTrail != null)
-                _movementTrail.Inject(_hippoController.transform);
+                _movementTrail.Inject(_hippoController.transform, _hippoGridInteractor);
 
             _hippoController.Inject(
                 container.Resolve<IInputProvider>(),
@@ -95,10 +99,15 @@ namespace HippoGame.Core
                 container.Resolve<IFillService>(),
                 container.Resolve<ITrailService>(),
                 _hippoController.transform,
-                container.Resolve<IMovementBehaviour>()
+                container.Resolve<IMovementBehaviour>(),
+                _particleEffects != null ? container.Resolve<IParticleService>() : null
             );
 
-            _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
+            _hippoGridInteractor.OnHit += () =>
+            {
+                container.Resolve<IGameState>().LoseLife();
+                _movementTrail?.Clear();
+            };
 
             if (_ballSpawner != null)
                 _ballSpawner.Inject(

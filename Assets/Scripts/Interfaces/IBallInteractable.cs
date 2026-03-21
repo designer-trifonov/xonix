@@ -8,6 +8,6 @@ namespace HippoGame.Interfaces
     {
         bool IsVulnerable { get; }
         bool IsNearTrail(Vector2 position, float threshold);
-        void OnBallHit();
+        void OnBallHit(Vector2 hitPosition);
     }
 }
