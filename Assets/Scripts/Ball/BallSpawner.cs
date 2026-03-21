@@ -15,6 +15,7 @@ namespace HippoGame.Ball
         private IBoundaryService  _boundary;
         private Transform         _hippo;
         private IBallInteractable _interactable;
+        private float             _currentBallSpeed;
 
         public void Inject(IGridService grid, IBoundaryService boundary,
             Transform hippo, IBallInteractable interactable)
@@ -29,6 +30,7 @@ namespace HippoGame.Ball
         public void SpawnBalls(int count, float speed)
         {
             ClearBalls();
+            _currentBallSpeed = speed;
             Rect bounds = _boundary.GetBounds();
             Debug.Log($"[BallSpawner] SpawnBalls count={count} speed={speed:F2}");
 
@@ -73,6 +75,32 @@ namespace HippoGame.Ball
 
             Debug.Log($"[BallSpawner] CheckBallsAfterFill: поймано={caught.Count} осталось={_balls.Count}");
             return _balls.Count == 0;
+        }
+
+        public bool RemoveOneBall()
+        {
+            for (int i = _balls.Count - 1; i >= 0; i--)
+            {
+                if (!_balls[i].IsAlive) continue;
+                if (_balls.Count <= 1)
+                {
+                    Debug.Log("[BallSpawner] RemoveOneBall: защита — минимум 1 шар");
+                    return false;
+                }
+                _balls[i].Kill();
+                _balls.RemoveAt(i);
+                Debug.Log($"[BallSpawner] RemoveOneBall: удалён шар, осталось={_balls.Count}");
+                return true;
+            }
+            return false;
+        }
+
+        public void SlowBalls(float factor)
+        {
+            _currentBallSpeed *= factor;
+            foreach (var ball in _balls)
+                if (ball.IsAlive) ball.SetSpeed(_currentBallSpeed);
+            Debug.Log($"[BallSpawner] SlowBalls: фактор={factor:F2} → скорость={_currentBallSpeed:F2}");
         }
 
         public void ClearBalls()

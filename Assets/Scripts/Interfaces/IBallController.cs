@@ -7,5 +7,6 @@ namespace HippoGame.Interfaces
         bool    IsAlive  { get; }
         Vector3 Position { get; }
         void    Kill();
+        void    SetSpeed(float speed);
     }
 }

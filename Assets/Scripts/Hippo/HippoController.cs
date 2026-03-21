@@ -60,6 +60,12 @@ namespace HippoGame.Hippo
 
         public void SetPosition(Vector3 position) => transform.position = position;
 
+        public void ResetMovement()
+        {
+            _currentDirection = Vector2.zero;
+            _movement.Resume();
+        }
+
         private void PlaceAtSpawn()
         {
             Rect bounds = _boundary.GetBounds();

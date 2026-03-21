@@ -16,7 +16,8 @@ namespace HippoGame.Core
         private IMovementBehaviour   _movement;
         private IBoundaryService     _boundary;
 
-        private bool _levelTransitionPending;
+        private bool  _levelTransitionPending;
+        private float _lastFillPct;
 
         public event Action OnGameOver;
 
@@ -58,17 +59,16 @@ namespace HippoGame.Core
         private void OnZoneFilled()
         {
             _movement.Stop();
-            _gameState.ZoneFilled();
 
-            if (_ballSpawner != null && _ballSpawner.CheckBallsAfterFill())
-            {
-                Debug.Log("[LevelManager] Все шары закрашены — победа!");
-                CompleteLevel();
-                return;
-            }
+            _ballSpawner?.CheckBallsAfterFill();
 
-            float pct = CountFillPercent();
-            Debug.Log($"[LevelManager] Зона залита | {pct:F1}% / {_gameState.RequiredFillPercent:F0}%");
+            float pct   = CountFillPercent();
+            float delta = pct - _lastFillPct;
+            _lastFillPct = pct;
+
+            _gameState.ZoneFilled(delta);
+
+            Debug.Log($"[LevelManager] Зона залита | {pct:F1}% (+{delta:F1}%) / {_gameState.RequiredFillPercent:F0}%");
 
             if (pct >= _gameState.RequiredFillPercent)
                 CompleteLevel();
@@ -113,10 +113,12 @@ namespace HippoGame.Core
         private void ResetField()
         {
             Debug.Log("[LevelManager] ResetField — сетка, трейл, шары");
+            _lastFillPct = 0f;
             _grid.ResetCells();
 
             Vector3 spawnPos = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
             _hippo.SetPosition(spawnPos);
+            _hippo.ResetMovement();
             _interactor.ResetState(spawnPos);
 
             _ballSpawner?.ClearBalls();

@@ -7,5 +7,7 @@ namespace HippoGame.Interfaces
         void SpawnBalls(int count, float speed);
         bool CheckBallsAfterFill();
         void ClearBalls();
+        bool RemoveOneBall();
+        void SlowBalls(float factor);
     }
 }

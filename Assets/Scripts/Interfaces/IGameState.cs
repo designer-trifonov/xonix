@@ -14,7 +14,8 @@ namespace HippoGame.Interfaces
 
         event Action OnChanged;
 
-        void ZoneFilled();
+        void ZoneFilled(float fillDeltaPct);
+        void AddLife();
         void LoseLife();
         void NextLevel();
         void RestoreLives();

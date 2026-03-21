@@ -10,6 +10,7 @@ namespace HippoGame.Ball
         public bool    IsAlive  => this != null;
         public Vector3 Position => transform.position;
         public void    Kill()   => Destroy(gameObject);
+        public void    SetSpeed(float speed) => _speed = speed;
 
         private Vector2           _direction;
         private float             _speed;

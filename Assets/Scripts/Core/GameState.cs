@@ -10,7 +10,6 @@ namespace HippoGame.Core
         public int Score { get; private set; } = 0;
         public int Level { get; private set; } = 1;
 
-        private int          _zonesFilledTotal = 0;
         private LevelConfig  _config;
 
         public event Action OnChanged;
@@ -26,12 +25,18 @@ namespace HippoGame.Core
             Lives   = config.StartLives;
         }
 
-        public void ZoneFilled()
+        public void ZoneFilled(float fillDeltaPct)
         {
-            _zonesFilledTotal++;
-            int points = _config.BaseZoneScore + (_zonesFilledTotal - 1) * _config.ZoneScoreIncrement;
+            int points = Mathf.RoundToInt(fillDeltaPct / 100f * _config.PointsPerLevel);
             Score += points;
-            Debug.Log($"[GameState] ZoneFilled #{_zonesFilledTotal} +{points} pts → Score={Score}");
+            Debug.Log($"[GameState] ZoneFilled +{fillDeltaPct:F1}% → +{points} pts → Score={Score}");
+            OnChanged?.Invoke();
+        }
+
+        public void AddLife()
+        {
+            Lives++;
+            Debug.Log($"[GameState] AddLife → Lives={Lives}");
             OnChanged?.Invoke();
         }
 

@@ -33,6 +33,7 @@ namespace HippoGame.Core
         [SerializeField] private LevelUIController       _levelUI;
         [SerializeField] private FillPercentUIController _percentUI;
         [SerializeField] private GameOverUIController    _gameOverUI;
+        [SerializeField] private ShopUIController       _shopUI;
 
         private void Awake()
         {
@@ -132,6 +133,9 @@ namespace HippoGame.Core
             if (_levelUI   != null) _levelUI.Inject(state);
             if (_percentUI != null) _percentUI.Inject(state, grid);
 
+            if (_shopUI != null)
+                _shopUI.Inject(container.Resolve<IGameState>(), container.Resolve<IBallSpawner>());
+
             var levelManager = container.Resolve<LevelManager>();
             if (_gameOverUI != null)
             {
@@ -141,6 +145,12 @@ namespace HippoGame.Core
             }
 
             Debug.Log("[Bootstrap] Inject завершён");
+        }
+
+        private void Update()
+        {
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+                Application.Quit();
         }
 
         private void InitializeAll(DiContainer container)

@@ -21,7 +21,6 @@ namespace HippoGame.Core
         public float BallSpeedPerLevel   = 0.5f;
 
         [Header("Score")]
-        public int BaseZoneScore         = 10000;
-        public int ZoneScoreIncrement    = 5000;
+        public int PointsPerLevel = 10000;
     }
 }
