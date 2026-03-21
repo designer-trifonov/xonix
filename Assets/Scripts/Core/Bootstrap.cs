@@ -14,14 +14,16 @@ namespace HippoGame.Core
     /// Единая точка сборки: создаёт все объекты и соединяет зависимости.
     public class Bootstrap : MonoBehaviour
     {
+        [Header("Config")]
+        [SerializeField] private LevelConfig               _levelConfig;
+
         [Header("Systems")]
-        [SerializeField] private GameManager        _gameManager;
-        [SerializeField] private GameZone           _gameZone;
-        [SerializeField] private HippoController    _hippoController;
-        [SerializeField] private GameGrid           _gameGrid;
-        [SerializeField] private HippoGridInteractor _hippoGridInteractor;
-        [SerializeField] private TrailLineRenderer  _trailLineRenderer;
-        [SerializeField] private BallSpawner        _ballSpawner;
+        [SerializeField] private GameZone                  _gameZone;
+        [SerializeField] private HippoController           _hippoController;
+        [SerializeField] private GameGrid                  _gameGrid;
+        [SerializeField] private HippoGridInteractor       _hippoGridInteractor;
+        [SerializeField] private TrailLineRenderer _movementTrail;
+        [SerializeField] private BallSpawner               _ballSpawner;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -33,8 +35,6 @@ namespace HippoGame.Core
         private void Awake()
         {
             Debug.Log("[Bootstrap] Awake — сборка зависимостей");
-            _gameManager.Register();
-
             var container = BuildContainer();
             Inject(container);
             InitializeAll(container);
@@ -44,10 +44,11 @@ namespace HippoGame.Core
         private DiContainer BuildContainer()
         {
             var container = new DiContainer();
-            var gameState = new GameState();
+            var gameState = new GameState(_levelConfig);
             var movement  = new AutoDirectionalMovement();
 
             container.Register<GameState>(gameState);
+            container.Register<IGameState>(gameState);
             container.Register<IBoundaryService>(_gameZone);
             container.Register<IInputProvider>(new KeyboardInputProvider());
             container.Register<AutoDirectionalMovement>(movement);
@@ -55,13 +56,16 @@ namespace HippoGame.Core
             container.Register<HippoController>(_hippoController);
             container.Register<IGridService>(_gameGrid);
             container.Register<IGridRenderer>(_gameGrid);
-            container.Register<IFillService>(new ZoneFillService());
+            container.Register<IFillService>(new FloodFillService());
+            var grid = container.Resolve<IGridService>();
             container.Register<ICollisionService>(new DrawingAwareCollisionService(
                 _hippoGridInteractor,
-                container.Resolve<IGridService>()
+                grid,
+                new CellCollisionService(grid)
             ));
+            container.Register<IHippoController>(_hippoController);
+            container.Register<IHippoGridInteractor>(_hippoGridInteractor);
             container.Register<ITrailService>(new TrailTracker());
-            container.Register<ITrailVisualizer>(_trailLineRenderer);
             container.Register<IBallSpawner>(_ballSpawner);
             container.Register<IBallInteractable>(_hippoGridInteractor);
             container.Register<HippoGridInteractor>(_hippoGridInteractor);
@@ -76,7 +80,8 @@ namespace HippoGame.Core
             var state = container.Resolve<GameState>();
             var grid  = container.Resolve<IGridService>();
 
-            _trailLineRenderer.Inject(grid);
+            if (_movementTrail != null)
+                _movementTrail.Inject(_hippoController.transform);
 
             _hippoController.Inject(
                 container.Resolve<IInputProvider>(),
@@ -89,11 +94,11 @@ namespace HippoGame.Core
                 grid,
                 container.Resolve<IFillService>(),
                 container.Resolve<ITrailService>(),
-                container.Resolve<ITrailVisualizer>(),
                 _hippoController.transform,
-                state,
-                container.Resolve<AutoDirectionalMovement>()
+                container.Resolve<IMovementBehaviour>()
             );
+
+            _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
 
             if (_ballSpawner != null)
                 _ballSpawner.Inject(
@@ -104,11 +109,11 @@ namespace HippoGame.Core
                 );
 
             container.Resolve<LevelManager>().Inject(
-                state,
+                container.Resolve<IGameState>(),
                 grid,
                 container.Resolve<IBallSpawner>(),
-                _hippoController,
-                _hippoGridInteractor,
+                container.Resolve<IHippoController>(),
+                container.Resolve<IHippoGridInteractor>(),
                 container.Resolve<IMovementBehaviour>(),
                 container.Resolve<IBoundaryService>()
             );

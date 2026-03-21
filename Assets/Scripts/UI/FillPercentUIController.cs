@@ -1,8 +1,8 @@
 using TMPro;
 using UnityEngine;
-using HippoGame.Core;
 using HippoGame.Interfaces;
 using HippoGame.Grid;
+
 
 namespace HippoGame.UI
 {
@@ -10,20 +10,16 @@ namespace HippoGame.UI
     {
         [SerializeField] private TMP_Text _text;
 
-        private GameState    _state;
+        private IGameState   _state;
         private IGridService _grid;
 
-        public void Inject(GameState state, IGridService grid)
+        public void Inject(IGameState state, IGridService grid)
         {
             _state = state;
             _grid  = grid;
         }
 
-        public void Initialize()
-        {
-            if (_text == null)
-                _text = GameObject.Find("Percent_Text")?.GetComponent<TMP_Text>();
-        }
+        public void Initialize() => Debug.Log("[FillPercentUIController] Initialize");
 
         private void LateUpdate()
         {

@@ -14,8 +14,17 @@ namespace HippoGame.Movement
         /// Срабатывает когда игрок нажимает новую клавишу направления.
         public event Action<Vector2> OnDirectionChanged;
 
-        public void Stop()   => Stopped = true;
-        public void Resume() => Stopped = false;
+        public void Stop()
+        {
+            Stopped = true;
+            Debug.Log("[AutoDirectionalMovement] Stop");
+        }
+
+        public void Resume()
+        {
+            Stopped = false;
+            Debug.Log("[AutoDirectionalMovement] Resume");
+        }
 
         public void Tick(Transform target, ref Vector2 currentDirection, Vector2 inputDirection,
             Rect bounds, ICollisionService collision)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace HippoGame.Core
 {
@@ -19,6 +20,7 @@ namespace HippoGame.Core
             if (_bindings.TryGetValue(type, out object instance))
                 return (T)instance;
 
+            Debug.LogError($"[DiContainer] Тип не зарегистрирован: {type.Name}");
             throw new InvalidOperationException($"[DiContainer] Тип не зарегистрирован: {type.Name}");
         }
     }

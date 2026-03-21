@@ -5,8 +5,12 @@ using HippoGame.Grid;
 namespace HippoGame.Ball
 {
     /// Движение шара, отскок от стен и залитых пикселей, попадание в гиппо и трейл.
-    public class BallController : MonoBehaviour
+    public class BallController : MonoBehaviour, IBallController
     {
+        public bool    IsAlive  => this != null;
+        public Vector3 Position => transform.position;
+        public void    Kill()   => Destroy(gameObject);
+
         private Vector2           _direction;
         private float             _speed;
         private Rect              _bounds;

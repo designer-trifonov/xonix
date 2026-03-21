@@ -27,25 +27,28 @@ namespace HippoGame.UI
         {
             _panel.SetActive(true);
             Time.timeScale = 0f;
+            Debug.Log("[GameOverUIController] Show — игра на паузе");
         }
 
         public void Hide()
         {
             _panel.SetActive(false);
             Time.timeScale = 1f;
+            Debug.Log("[GameOverUIController] Hide — игра возобновлена");
         }
 
         private void OnWatchAdClicked()
         {
+            Debug.Log("[GameOverUIController] OnWatchAdClicked");
             StartCoroutine(MockAd());
         }
 
         private IEnumerator MockAd()
         {
+            Debug.Log("[GameOverUIController] MockAd — старт");
             _watchAdButton.interactable = false;
             _restartButton.interactable = false;
 
-            // Мок рекламы — считаем 5 секунд
             for (int i = 5; i > 0; i--)
             {
                 if (_adButtonText != null)
@@ -59,12 +62,14 @@ namespace HippoGame.UI
             _watchAdButton.interactable = true;
             _restartButton.interactable = true;
 
+            Debug.Log("[GameOverUIController] MockAd — завершена, продолжаем");
             Hide();
             OnWatchAd?.Invoke();
         }
 
         private void OnRestartClicked()
         {
+            Debug.Log("[GameOverUIController] OnRestartClicked");
             Hide();
             OnRestart?.Invoke();
         }

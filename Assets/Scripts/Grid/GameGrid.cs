@@ -1,6 +1,5 @@
 using UnityEngine;
 using HippoGame.Interfaces;
-using HippoGame.Core;
 
 namespace HippoGame.Grid
 {
@@ -9,6 +8,7 @@ namespace HippoGame.Grid
     {
         [SerializeField] private Texture2D _fillTexture;
         [SerializeField] private int       _pixelsPerUnit = 60;
+        [SerializeField] private Vector2   _zoneSize      = new Vector2(11f, 7.6f);
 
         private CellState[,] _cells;
         private Texture2D    _gridTexture;
@@ -35,21 +35,9 @@ namespace HippoGame.Grid
             _dirty = false;
         }
 
-        private Vector2 GetZoneSize()
-        {
-            GameManager gm = GameManager.Instance != null
-                ? GameManager.Instance
-                : FindObjectOfType<GameManager>();
-
-            if (gm == null)
-                throw new System.InvalidOperationException("[GameGrid] GameManager не найден в сцене");
-
-            return gm.ZoneSize;
-        }
-
         private void BuildGrid()
         {
-            Vector2 zoneSize = GetZoneSize();
+            Vector2 zoneSize = _zoneSize;
             _bounds    = new Rect(-zoneSize.x / 2f, -zoneSize.y / 2f, zoneSize.x, zoneSize.y);
             _columns   = Mathf.Max(2, Mathf.RoundToInt(zoneSize.x * _pixelsPerUnit));
             _rows      = Mathf.Max(2, Mathf.RoundToInt(zoneSize.y * _pixelsPerUnit));
@@ -60,7 +48,7 @@ namespace HippoGame.Grid
 
         private void CreateQuad()
         {
-            Vector2    zoneSize = GetZoneSize();
+            Vector2    zoneSize = _zoneSize;
             GameObject quad     = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.name = "GridQuad";
             quad.transform.SetParent(transform);

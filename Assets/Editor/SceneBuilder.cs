@@ -22,7 +22,6 @@ namespace HippoGame.Editor
 
             GameObject controllers = new GameObject("Controllers");
 
-            GameManager         manager    = CreateGameManager(controllers);
             GameZone            zone       = CreateGameZone(controllers);
             HippoController     hippo      = CreateHippo(controllers);
             GameGrid            grid       = CreateGameGrid(controllers);
@@ -33,7 +32,7 @@ namespace HippoGame.Editor
             UIControllers ui        = SetupUIControllers(controllers);
             GameOverUIController gameOver = CreateGameOverPanel(controllers);
 
-            CreateBootstrap(manager, zone, hippo, grid, interactor, trail, spawner, ui, gameOver);
+            CreateBootstrap(zone, hippo, grid, interactor, trail, spawner, ui, gameOver);
             SetupCamera();
 
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -51,7 +50,6 @@ namespace HippoGame.Editor
         // ── Очистка ─────────────────────────────────────────────────────────
         private static void ClearExisting()
         {
-            DestroyIfExists<GameManager>();
             DestroyIfExists<GameZone>();
             DestroyIfExists<HippoController>();
             DestroyIfExists<GameGrid>();
@@ -92,9 +90,6 @@ namespace HippoGame.Editor
             go.transform.SetParent(parent.transform);
             return go;
         }
-
-        private static GameManager CreateGameManager(GameObject parent)
-            => CreateChild("GameManagerController", parent).AddComponent<GameManager>();
 
         private static GameZone CreateGameZone(GameObject parent)
         {
@@ -270,7 +265,7 @@ namespace HippoGame.Editor
         }
 
         // ── Bootstrap ────────────────────────────────────────────────────────
-        private static void CreateBootstrap(GameManager manager, GameZone zone,
+        private static void CreateBootstrap(GameZone zone,
             HippoController hippo, GameGrid grid, HippoGridInteractor interactor,
             TrailLineRenderer trail, BallSpawner spawner, UIControllers ui,
             GameOverUIController gameOver)
@@ -279,12 +274,11 @@ namespace HippoGame.Editor
             Bootstrap  bootstrap = go.AddComponent<Bootstrap>();
 
             SerializedObject so = new SerializedObject(bootstrap);
-            so.FindProperty("_gameManager").objectReferenceValue         = manager;
             so.FindProperty("_gameZone").objectReferenceValue            = zone;
             so.FindProperty("_hippoController").objectReferenceValue     = hippo;
             so.FindProperty("_gameGrid").objectReferenceValue            = grid;
             so.FindProperty("_hippoGridInteractor").objectReferenceValue = interactor;
-            so.FindProperty("_trailLineRenderer").objectReferenceValue   = trail;
+            so.FindProperty("_movementTrail").objectReferenceValue       = trail;
             so.FindProperty("_ballSpawner").objectReferenceValue         = spawner;
             so.FindProperty("_livesUI").objectReferenceValue             = ui.Lives;
             so.FindProperty("_scoreUI").objectReferenceValue             = ui.Score;

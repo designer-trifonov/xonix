@@ -1,27 +1,35 @@
 using System;
 using UnityEngine;
+using HippoGame.Interfaces;
 
 namespace HippoGame.Core
 {
-    public class GameState
+    public class GameState : IGameState
     {
-        public int Lives      { get; private set; } = 3;
-        public int Score      { get; private set; } = 0;
-        public int Level      { get; private set; } = 1;
+        public int Lives { get; private set; }
+        public int Score { get; private set; } = 0;
+        public int Level { get; private set; } = 1;
 
-        private int _zonesFilledTotal = 0;
+        private int          _zonesFilledTotal = 0;
+        private LevelConfig  _config;
 
         public event Action OnChanged;
 
-        public float RequiredFillPercent => 50f + (Level - 1) * 5f;
-        public float HippoSpeed          => 3.5f + (Level - 1) * 0.5f;
-        public float BallSpeed           => 2f   + (Level - 1) * 0.5f;
+        public float RequiredFillPercent => _config.BaseFillPercent     + (Level - 1) * _config.FillPercentPerLevel;
+        public float HippoSpeed          => _config.BaseHippoSpeed      + (Level - 1) * _config.HippoSpeedPerLevel;
+        public float BallSpeed           => _config.BaseBallSpeed       + (Level - 1) * _config.BallSpeedPerLevel;
         public int   BallCount           => Level;
+
+        public GameState(LevelConfig config)
+        {
+            _config = config;
+            Lives   = config.StartLives;
+        }
 
         public void ZoneFilled()
         {
             _zonesFilledTotal++;
-            int points = 10000 + (_zonesFilledTotal - 1) * 5000;
+            int points = _config.BaseZoneScore + (_zonesFilledTotal - 1) * _config.ZoneScoreIncrement;
             Score += points;
             Debug.Log($"[GameState] ZoneFilled #{_zonesFilledTotal} +{points} pts → Score={Score}");
             OnChanged?.Invoke();
@@ -43,18 +51,18 @@ namespace HippoGame.Core
 
         public void RestoreLives()
         {
-            Lives = 3;
-            Debug.Log("[GameState] RestoreLives → Lives=3");
+            Lives = _config.StartLives;
+            Debug.Log($"[GameState] RestoreLives → Lives={Lives}");
             OnChanged?.Invoke();
         }
 
         public void Reset()
         {
-            Lives = 3;
+            Lives = _config.StartLives;
             Score = 0;
             Level = 1;
             _zonesFilledTotal = 0;
-            Debug.Log("[GameState] Reset → Lives=3 Score=0 Level=1");
+            Debug.Log("[GameState] Reset");
             OnChanged?.Invoke();
         }
     }

@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using HippoGame.Interfaces;
-using HippoGame.Hippo;
 using HippoGame.Grid;
 
 namespace HippoGame.Core
@@ -9,11 +8,11 @@ namespace HippoGame.Core
     /// Логика смены уровней, сброс поля, проверка победы и поражения.
     public class LevelManager
     {
-        private GameState            _gameState;
+        private IGameState           _gameState;
         private IGridService         _grid;
         private IBallSpawner         _ballSpawner;
-        private HippoController      _hippo;
-        private HippoGridInteractor  _interactor;
+        private IHippoController     _hippo;
+        private IHippoGridInteractor _interactor;
         private IMovementBehaviour   _movement;
         private IBoundaryService     _boundary;
 
@@ -21,9 +20,9 @@ namespace HippoGame.Core
 
         public event Action OnGameOver;
 
-        public void Inject(GameState state, IGridService grid,
-            IBallSpawner spawner, HippoController hippo,
-            HippoGridInteractor interactor, IMovementBehaviour movement,
+        public void Inject(IGameState state, IGridService grid,
+            IBallSpawner spawner, IHippoController hippo,
+            IHippoGridInteractor interactor, IMovementBehaviour movement,
             IBoundaryService boundary)
         {
             _gameState   = state;
@@ -117,7 +116,7 @@ namespace HippoGame.Core
             _grid.ResetCells();
 
             Vector3 spawnPos = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
-            _hippo.transform.position = spawnPos;
+            _hippo.SetPosition(spawnPos);
             _interactor.ResetState(spawnPos);
 
             _ballSpawner?.ClearBalls();

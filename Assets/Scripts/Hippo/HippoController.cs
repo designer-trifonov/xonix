@@ -4,7 +4,7 @@ using HippoGame.Interfaces;
 namespace HippoGame.Hippo
 {
     /// Принимает ввод, двигает гиппо, держит позицию в пределах границ.
-    public class HippoController : MonoBehaviour, IInitializable
+    public class HippoController : MonoBehaviour, IInitializable, IHippoController
     {
         private IInputProvider    _input;
         private IMovementBehaviour _movement;
@@ -50,12 +50,15 @@ namespace HippoGame.Hippo
 
         public void SnapToSpawn()
         {
+#if UNITY_EDITOR
             if (_boundary == null)
                 _boundary = FindObjectOfType<Zone.GameZone>();
-
-            if (_boundary != null)
-                PlaceAtSpawn();
+#endif
+            if (_boundary == null) return;
+            PlaceAtSpawn();
         }
+
+        public void SetPosition(Vector3 position) => transform.position = position;
 
         private void PlaceAtSpawn()
         {

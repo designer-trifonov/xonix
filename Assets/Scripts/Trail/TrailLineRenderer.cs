@@ -1,18 +1,22 @@
-using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.Interfaces;
 
 namespace HippoGame.Trail
 {
-    /// Рисует хвост гиппо через LineRenderer.
-    /// IGridService инжектится один раз — конвертирует клетки в мировые координаты.
+    /// Тупой визуализатор хвоста гиппо.
+    /// Правило одно: двигаемся — рисуем, стоим — не рисуем.
+    /// Не знает ни о сетке, ни о зонах, ни о состоянии игры.
     [RequireComponent(typeof(LineRenderer))]
-    public class TrailLineRenderer : MonoBehaviour, ITrailVisualizer
+    public class TrailLineRenderer : MonoBehaviour, ITrailRenderer
     {
         private const float LineWidth = 0.05f;
+        private const int   MaxPoints = 2000;
 
-        private LineRenderer  _lr;
-        private IGridService  _grid;
+        private LineRenderer _lr;
+        private Transform    _hippo;
+        private Vector3      _lastPos;
+        private Vector3[]    _positions = new Vector3[MaxPoints];
+        private int          _count;
 
         private void Awake()
         {
@@ -26,43 +30,43 @@ namespace HippoGame.Trail
             _lr.material          = new Material(Shader.Find("Sprites/Default"));
             _lr.sortingOrder      = 1;
             _lr.numCornerVertices = 4;
-            Debug.Log("[TrailLineRenderer] Awake — LineRenderer инициализирован");
         }
 
-        public void Inject(IGridService grid)
+        public void Inject(Transform hippo)
         {
-            _grid = grid;
-            Debug.Log("[TrailLineRenderer] Inject — IGridService получен");
+            _hippo   = hippo;
+            _lastPos = hippo.position;
+            Debug.Log("[TrailLineRenderer] Inject — hippo transform получен");
         }
 
-        public void Redraw(IReadOnlyList<Vector2Int> points)
+        private void Update()
         {
-            if (_grid == null) return;
+            if (_hippo == null) return;
 
-            _lr.positionCount = points.Count;
-            for (int i = 0; i < points.Count; i++)
+            Vector3 pos = _hippo.position;
+            pos.z = -0.1f;
+
+            if (pos != _lastPos)
             {
-                Vector2 world = _grid.CellToWorld(points[i]);
-                _lr.SetPosition(i, new Vector3(world.x, world.y, -0.1f));
+                if (_count < MaxPoints)
+                {
+                    _positions[_count] = pos;
+                    _count++;
+                    _lr.positionCount = _count;
+                    _lr.SetPosition(_count - 1, pos);
+                }
+                _lastPos = pos;
             }
-        }
-
-        public void RedrawWithPreview(IReadOnlyList<Vector2Int> points, Vector2Int previewCell)
-        {
-            if (_grid == null) return;
-
-            _lr.positionCount = points.Count + 1;
-            for (int i = 0; i < points.Count; i++)
+            else if (_count > 0)
             {
-                Vector2 world = _grid.CellToWorld(points[i]);
-                _lr.SetPosition(i, new Vector3(world.x, world.y, -0.1f));
+                _count = 0;
+                _lr.positionCount = 0;
             }
-            Vector2 preview = _grid.CellToWorld(previewCell);
-            _lr.SetPosition(points.Count, new Vector3(preview.x, preview.y, -0.1f));
         }
 
         public void Clear()
         {
+            _count = 0;
             _lr.positionCount = 0;
             Debug.Log("[TrailLineRenderer] Clear");
         }

@@ -1,22 +1,18 @@
 using UnityEngine;
 using HippoGame.Interfaces;
-using HippoGame.Core;
 
 namespace HippoGame.Zone
 {
     /// Физические границы игрового поля.
-    /// Отдаёт Rect на основе размера из GameManager.
     [ExecuteAlways]
     public class GameZone : MonoBehaviour, IBoundaryService
     {
+        [SerializeField] private Vector2 _zoneSize = new Vector2(11f, 7.6f);
+
         public Rect GetBounds()
         {
-            if (GameManager.Instance == null)
-                throw new System.InvalidOperationException("[GameZone] GameManager.Instance is null");
-
-            Vector2 size   = GameManager.Instance.ZoneSize;
             Vector2 center = transform.position;
-            return new Rect(center.x - size.x / 2f, center.y - size.y / 2f, size.x, size.y);
+            return new Rect(center.x - _zoneSize.x / 2f, center.y - _zoneSize.y / 2f, _zoneSize.x, _zoneSize.y);
         }
 
 #if UNITY_EDITOR
@@ -24,10 +20,8 @@ namespace HippoGame.Zone
 
         private void OnDrawGizmos()
         {
-            if (GameManager.Instance == null) return;
             Gizmos.color = Color.green;
-            Vector2 size = GameManager.Instance.ZoneSize;
-            Gizmos.DrawWireCube(transform.position, new Vector3(size.x, size.y, 0f));
+            Gizmos.DrawWireCube(transform.position, new Vector3(_zoneSize.x, _zoneSize.y, 0f));
         }
 #endif
     }

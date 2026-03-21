@@ -9,7 +9,7 @@ namespace HippoGame.Ball
     /// LevelManager работает с ним только через IBallSpawner.
     public class BallSpawner : MonoBehaviour, IBallSpawner
     {
-        private readonly List<BallController> _balls = new();
+        private readonly List<IBallController> _balls = new();
 
         private IGridService      _grid;
         private IBoundaryService  _boundary;
@@ -55,12 +55,12 @@ namespace HippoGame.Ball
 
         public bool CheckBallsAfterFill()
         {
-            List<BallController> caught = new();
+            List<IBallController> caught = new();
 
             foreach (var ball in _balls)
             {
-                if (ball == null) continue;
-                Vector2Int cell = _grid.WorldToCell(ball.transform.position);
+                if (!ball.IsAlive) continue;
+                Vector2Int cell = _grid.WorldToCell(ball.Position);
                 if (_grid.GetCell(cell.x, cell.y) == CellState.Filled)
                     caught.Add(ball);
             }
@@ -68,7 +68,7 @@ namespace HippoGame.Ball
             foreach (var ball in caught)
             {
                 _balls.Remove(ball);
-                Destroy(ball.gameObject);
+                ball.Kill();
             }
 
             Debug.Log($"[BallSpawner] CheckBallsAfterFill: поймано={caught.Count} осталось={_balls.Count}");
@@ -79,7 +79,7 @@ namespace HippoGame.Ball
         {
             Debug.Log($"[BallSpawner] ClearBalls count={_balls.Count}");
             foreach (var b in _balls)
-                if (b != null) Destroy(b.gameObject);
+                if (b.IsAlive) b.Kill();
             _balls.Clear();
         }
 

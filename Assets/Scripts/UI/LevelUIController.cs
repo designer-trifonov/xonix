@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using HippoGame.Core;
 using HippoGame.Interfaces;
 
 namespace HippoGame.UI
@@ -9,17 +8,15 @@ namespace HippoGame.UI
     {
         [SerializeField] private TMP_Text _text;
 
-        private GameState _state;
+        private IGameState _state;
 
-        public void Inject(GameState state) => _state = state;
+        public void Inject(IGameState state) => _state = state;
 
         public void Initialize()
         {
-            if (_text == null)
-                _text = GameObject.Find("Level_Text")?.GetComponent<TMP_Text>();
-
             _state.OnChanged += Refresh;
             Refresh();
+            Debug.Log("[LevelUIController] Initialize");
         }
 
         private void Refresh()
