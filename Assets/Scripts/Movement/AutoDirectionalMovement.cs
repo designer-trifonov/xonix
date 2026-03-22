@@ -29,11 +29,18 @@ namespace HippoGame.Movement
         public void Tick(Transform target, ref Vector2 currentDirection, Vector2 inputDirection,
             Rect bounds, ICollisionService collision)
         {
-            if (inputDirection != Vector2.zero && inputDirection != currentDirection)
+            if (inputDirection != Vector2.zero)
             {
-                currentDirection = inputDirection;
-                Stopped = false;
-                OnDirectionChanged?.Invoke(currentDirection);
+                if (inputDirection != currentDirection)
+                {
+                    currentDirection = inputDirection;
+                    Stopped = false;
+                    OnDirectionChanged?.Invoke(currentDirection);
+                }
+                else if (Stopped)
+                {
+                    Stopped = false; // то же направление — просто возобновляем без события
+                }
             }
 
             if (currentDirection == Vector2.zero || Stopped)

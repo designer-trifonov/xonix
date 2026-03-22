@@ -60,8 +60,6 @@ namespace HippoGame.Core
         {
             _movement.Stop();
 
-            _ballSpawner?.CheckBallsAfterFill();
-
             float pct   = CountFillPercent();
             float delta = pct - _lastFillPct;
             _lastFillPct = pct;

@@ -15,6 +15,7 @@ namespace HippoGame.Hippo
         private IFillService     _fill;
         private ITrailService    _trail;
         private IParticleService _particles;
+        private IBallSpawner     _ballSpawner;
         private Transform        _hippoTransform;
 
         private Vector2Int _lastCell;
@@ -29,12 +30,14 @@ namespace HippoGame.Hippo
         public event Action OnHit;
 
         public void Inject(IGridService grid, IFillService fill, ITrailService trail,
-            Transform hippoTransform, IMovementBehaviour movement, IParticleService particles = null)
+            Transform hippoTransform, IMovementBehaviour movement,
+            IParticleService particles = null, IBallSpawner ballSpawner = null)
         {
             _grid           = grid;
             _fill           = fill;
             _trail          = trail;
             _particles      = particles;
+            _ballSpawner    = ballSpawner;
             _hippoTransform = hippoTransform;
 
             movement.OnDirectionChanged += OnMovementDirectionChanged;
@@ -131,7 +134,19 @@ namespace HippoGame.Hippo
 
             if (_isDrawing)
             {
-                if (isEdge || state == CellState.Filled || state == CellState.Trail)
+                if (state == CellState.Trail)
+                {
+                    // Врезались в собственный трейл — смерть
+                    ClearTrailCells();
+                    _trail.Clear();
+                    _isDrawing     = false;
+                    _hitInProgress = true;
+                    Debug.Log("[HippoGridInteractor] Врезался в свой трейл — смерть");
+                    OnHit?.Invoke();
+                    return;
+                }
+
+                if (isEdge || state == CellState.Filled)
                 {
                     _isDrawing = false;
 
@@ -156,7 +171,7 @@ namespace HippoGame.Hippo
                     }
                     else
                     {
-                        _fill.Fill(_grid, new List<Vector2Int>(_trail.Points));
+                        _fill.Fill(_grid, new List<Vector2Int>(_trail.Points), _ballSpawner?.GetPositions());
                         _trail.Clear();
                         Debug.Log("[HippoGridInteractor] Заливка выполнена");
                         OnZoneFilled?.Invoke();

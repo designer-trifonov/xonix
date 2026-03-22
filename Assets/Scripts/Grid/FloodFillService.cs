@@ -4,19 +4,16 @@ using HippoGame.Interfaces;
 
 namespace HippoGame.Grid
 {
-    /// Внутренний flood fill:
-    /// находит все пустые регионы, оставляет наибольший, остальные закрашивает.
+    /// Flood fill: находит все пустые регионы, заливает наименьший.
     public class FloodFillService : IFillService
     {
         private static readonly Vector2Int[] Neighbours =
             { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
-        public void Fill(IGridService grid, List<Vector2Int> trail)
+        public void Fill(IGridService grid, List<Vector2Int> trail, IReadOnlyList<Vector2> ballPositions)
         {
             Debug.Log($"[FloodFillService] Fill | trail={trail.Count}");
 
-            // Trail-клетки уже помечены как CellState.Trail в grid —
-            // flood останавливается на них автоматически (GetCell != Empty).
             HashSet<Vector2Int>    visited = new();
             List<List<Vector2Int>> regions = new();
 
@@ -24,7 +21,7 @@ namespace HippoGame.Grid
             for (int y = 0; y < grid.Rows; y++)
             {
                 Vector2Int cell = new(x, y);
-                if (visited.Contains(cell))            continue;
+                if (visited.Contains(cell))                continue;
                 if (grid.GetCell(x, y) != CellState.Empty) continue;
 
                 regions.Add(FloodRegion(grid, visited, cell));
@@ -37,13 +34,25 @@ namespace HippoGame.Grid
                     if (regions[i].Count < regions[minIdx].Count)
                         minIdx = i;
 
-                foreach (Vector2Int c in regions[minIdx])
-                    grid.SetCell(c.x, c.y, CellState.Filled);
+                var minRegion    = regions[minIdx];
+                var minRegionSet = new HashSet<Vector2Int>(minRegion);
+                bool hasBall     = false;
 
-                Debug.Log($"[FloodFillService] Регионов={regions.Count} | закрашен наименьший ({regions[minIdx].Count} клеток)");
+                if (ballPositions != null)
+                    foreach (Vector2 bp in ballPositions)
+                        if (minRegionSet.Contains(grid.WorldToCell(bp))) { hasBall = true; break; }
+
+                if (hasBall)
+                    Debug.Log($"[FloodFillService] Шар внутри наименьшего региона ({minRegion.Count} кл) — не закрашиваем");
+                else
+                {
+                    foreach (Vector2Int c in minRegion)
+                        grid.SetCell(c.x, c.y, CellState.Filled);
+                    Debug.Log($"[FloodFillService] Закрашен наименьший регион ({minRegion.Count} кл)");
+                }
             }
 
-            // Конвертируем все Trail-клетки в Filled по grid-state (не по списку)
+            // Trail → Filled
             for (int x = 0; x < grid.Columns; x++)
             for (int y = 0; y < grid.Rows; y++)
                 if (grid.GetCell(x, y) == CellState.Trail)

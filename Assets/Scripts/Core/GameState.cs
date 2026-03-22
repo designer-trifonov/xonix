@@ -66,7 +66,6 @@ namespace HippoGame.Core
             Lives = _config.StartLives;
             Score = 0;
             Level = 1;
-            _zonesFilledTotal = 0;
             Debug.Log("[GameState] Reset");
             OnChanged?.Invoke();
         }

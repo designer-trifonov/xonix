@@ -7,7 +7,7 @@ namespace HippoGame.Grid
     public class GameGrid : MonoBehaviour, IGridService, IGridRenderer
     {
         [SerializeField] private Texture2D _fillTexture;
-        [SerializeField] private int       _pixelsPerUnit = 60;
+        [SerializeField] private int       _pixelsPerUnit = 10;
         [SerializeField] private Vector2   _zoneSize      = new Vector2(11f, 7.6f);
 
         private CellState[,] _cells;
@@ -18,9 +18,10 @@ namespace HippoGame.Grid
         private Rect         _bounds;
         private float        _pixelSize;
 
-        public int  Columns => _columns;
-        public int  Rows    => _rows;
-        public Rect Bounds  => _bounds;
+        public int   Columns  => _columns;
+        public int   Rows     => _rows;
+        public Rect  Bounds   => _bounds;
+        public float CellSize => _pixelSize;
 
         private void Awake()
         {
@@ -114,11 +115,18 @@ namespace HippoGame.Grid
             _gridTexture.Apply();
         }
 
-        private Color CellColor(int x, int y) => _cells[x, y] switch
+        private static readonly Color BorderColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+
+        private Color CellColor(int x, int y)
         {
-            CellState.Filled => FillColor(x, y),
-            _                => Color.clear
-        };
+            if (x == 0 || x == _columns - 1 || y == 0 || y == _rows - 1)
+                return BorderColor;
+            return _cells[x, y] switch
+            {
+                CellState.Filled => FillColor(x, y),
+                _                => Color.clear
+            };
+        }
 
         private Color FillColor(int x, int y)
         {

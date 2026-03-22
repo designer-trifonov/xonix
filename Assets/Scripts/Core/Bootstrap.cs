@@ -92,7 +92,8 @@ namespace HippoGame.Core
                 container.Resolve<IInputProvider>(),
                 container.Resolve<IMovementBehaviour>(),
                 container.Resolve<IBoundaryService>(),
-                container.Resolve<ICollisionService>()
+                container.Resolve<ICollisionService>(),
+                container.Resolve<IGridService>()
             );
 
             _hippoGridInteractor.Inject(
@@ -101,7 +102,8 @@ namespace HippoGame.Core
                 container.Resolve<ITrailService>(),
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
-                _particleEffects != null ? container.Resolve<IParticleService>() : null
+                _particleEffects != null ? container.Resolve<IParticleService>() : null,
+                container.Resolve<IBallSpawner>()
             );
 
             _hippoGridInteractor.OnHit += () =>

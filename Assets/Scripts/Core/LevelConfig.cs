@@ -9,7 +9,7 @@ namespace HippoGame.Core
         public int StartLives = 3;
 
         [Header("Fill")]
-        public float BaseFillPercent     = 50f;
+        public float BaseFillPercent     = 75f;
         public float FillPercentPerLevel = 5f;
 
         [Header("Hippo Speed")]

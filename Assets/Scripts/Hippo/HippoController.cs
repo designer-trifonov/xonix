@@ -6,24 +6,42 @@ namespace HippoGame.Hippo
     /// Принимает ввод, двигает гиппо, держит позицию в пределах границ.
     public class HippoController : MonoBehaviour, IInitializable, IHippoController
     {
-        private IInputProvider    _input;
+        private IInputProvider     _input;
         private IMovementBehaviour _movement;
-        private IBoundaryService  _boundary;
-        private ICollisionService _collision;
-        private Vector2           _currentDirection;
+        private IBoundaryService   _boundary;
+        private ICollisionService  _collision;
+        private IGridService       _grid;
+        private Vector2            _currentDirection;
 
         public void Inject(IInputProvider input, IMovementBehaviour movement,
-            IBoundaryService boundary, ICollisionService collision)
+            IBoundaryService boundary, ICollisionService collision, IGridService grid)
         {
             _input     = input;
             _movement  = movement;
             _boundary  = boundary;
             _collision = collision;
+            _grid      = grid;
             Debug.Log("[HippoController] Inject — все зависимости получены");
         }
 
         public void Initialize()
         {
+            float cell = _grid?.CellSize ?? 0.1f;
+
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr == null) sr = gameObject.AddComponent<SpriteRenderer>();
+
+            if (sr.sprite == null)
+            {
+                Debug.LogError("[HippoController] Sprite не назначен! Назначь спрайт в инспекторе.", this);
+                return;
+            }
+
+            sr.sortingOrder = 10;
+
+            // Гарантируем scale = 1,1,1 (мог остаться из editor-тестов)
+            transform.localScale = Vector3.one;
+
             PlaceAtSpawn();
             Debug.Log($"[HippoController] Initialize — позиция={transform.position}");
         }
@@ -33,7 +51,15 @@ namespace HippoGame.Hippo
             if (_input == null || _movement == null || _boundary == null) return;
 
             Vector2 inputDir = _input.GetDirection();
-            Rect    bounds   = _boundary.GetBounds();
+
+            // Блокируем обратное направление только во время движения.
+            // Если стоим — сбрасываем currentDirection, запрет снимается.
+            if (_movement.Stopped)
+                _currentDirection = Vector2.zero;
+            else if (inputDir == -_currentDirection)
+                inputDir = Vector2.zero;
+
+            Rect bounds = _boundary.GetBounds();
             _movement.Tick(transform, ref _currentDirection, inputDir, bounds, _collision);
         }
 
@@ -54,11 +80,11 @@ namespace HippoGame.Hippo
             if (_boundary == null)
                 _boundary = FindObjectOfType<Zone.GameZone>();
 #endif
-            if (_boundary == null) return;
+            if (_boundary == null || _grid == null) return;
             PlaceAtSpawn();
         }
 
-        public void SetPosition(Vector3 position) => transform.position = position;
+        public void SetPosition(Vector3 position) => transform.position = new Vector3(position.x, position.y, -1f);
 
         public void ResetMovement()
         {
@@ -69,7 +95,10 @@ namespace HippoGame.Hippo
         private void PlaceAtSpawn()
         {
             Rect bounds = _boundary.GetBounds();
-            transform.position = new Vector3(0f, bounds.yMax, 0f);
+            Vector3 raw  = new Vector3(0f, bounds.yMax, -1f);
+            Vector2Int cell    = _grid.WorldToCell(raw);
+            Vector2    snapped = _grid.CellToWorld(cell);
+            transform.position = new Vector3(snapped.x, snapped.y, -1f);
         }
     }
 }

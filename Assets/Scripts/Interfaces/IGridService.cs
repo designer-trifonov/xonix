@@ -5,9 +5,10 @@ namespace HippoGame.Interfaces
 {
     public interface IGridService
     {
-        int Columns { get; }
-        int Rows    { get; }
-        Rect Bounds { get; }
+        int   Columns  { get; }
+        int   Rows     { get; }
+        Rect  Bounds   { get; }
+        float CellSize { get; }
         CellState GetCell(int x, int y);
         void SetCell(int x, int y, CellState state);
         Vector2Int WorldToCell(Vector2 worldPos);

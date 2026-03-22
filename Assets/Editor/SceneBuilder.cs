@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using System.IO;
 using TMPro;
 using HippoGame.Core;
 using HippoGame.Zone;
@@ -20,6 +21,8 @@ namespace HippoGame.Editor
         {
             ClearExisting();
 
+            LevelConfig config = GetOrCreateLevelConfig();
+
             GameObject controllers = new GameObject("Controllers");
 
             GameZone            zone       = CreateGameZone(controllers);
@@ -29,10 +32,10 @@ namespace HippoGame.Editor
             TrailLineRenderer   trail      = CreateTrailVisualizer(controllers);
             BallSpawner         spawner    = CreateBallSpawner(controllers);
 
-            UIControllers ui        = SetupUIControllers(controllers);
+            UIControllers        ui       = SetupUIControllers(controllers);
             GameOverUIController gameOver = CreateGameOverPanel(controllers);
 
-            CreateBootstrap(zone, hippo, grid, interactor, trail, spawner, ui, gameOver);
+            CreateBootstrap(zone, hippo, grid, interactor, trail, spawner, ui, gameOver, config);
             SetupCamera();
 
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
@@ -100,11 +103,11 @@ namespace HippoGame.Editor
 
         private static HippoController CreateHippo(GameObject parent)
         {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = "HippoController";
+            GameObject go = new GameObject("HippoController");
             go.transform.SetParent(parent.transform);
-            go.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            go.GetComponent<Renderer>().sortingOrder = 10;
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.color        = Color.red;
+            sr.sortingOrder = 10;
             return go.AddComponent<HippoController>();
         }
 
@@ -264,16 +267,42 @@ namespace HippoGame.Editor
             return btn;
         }
 
+        // ── LevelConfig ──────────────────────────────────────────────────────
+        private static LevelConfig GetOrCreateLevelConfig()
+        {
+            // Ищем существующий asset
+            string[] guids = AssetDatabase.FindAssets("t:LevelConfig");
+            if (guids.Length > 0)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                LevelConfig existing = AssetDatabase.LoadAssetAtPath<LevelConfig>(path);
+                Debug.Log($"[SceneBuilder] LevelConfig найден: {path}");
+                return existing;
+            }
+
+            // Создаём новый
+            string dir = "Assets/Resources";
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            string assetPath = $"{dir}/LevelConfig.asset";
+
+            LevelConfig config = ScriptableObject.CreateInstance<LevelConfig>();
+            AssetDatabase.CreateAsset(config, assetPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[SceneBuilder] LevelConfig создан: {assetPath}");
+            return config;
+        }
+
         // ── Bootstrap ────────────────────────────────────────────────────────
         private static void CreateBootstrap(GameZone zone,
             HippoController hippo, GameGrid grid, HippoGridInteractor interactor,
             TrailLineRenderer trail, BallSpawner spawner, UIControllers ui,
-            GameOverUIController gameOver)
+            GameOverUIController gameOver, LevelConfig config)
         {
             GameObject go        = new GameObject("Bootstrap");
             Bootstrap  bootstrap = go.AddComponent<Bootstrap>();
 
             SerializedObject so = new SerializedObject(bootstrap);
+            so.FindProperty("_levelConfig").objectReferenceValue         = config;
             so.FindProperty("_gameZone").objectReferenceValue            = zone;
             so.FindProperty("_hippoController").objectReferenceValue     = hippo;
             so.FindProperty("_gameGrid").objectReferenceValue            = grid;

@@ -55,7 +55,7 @@ namespace HippoGame.Ball
             }
         }
 
-        public bool CheckBallsAfterFill()
+        public int CheckBallsAfterFill()
         {
             List<IBallController> caught = new();
 
@@ -74,7 +74,15 @@ namespace HippoGame.Ball
             }
 
             Debug.Log($"[BallSpawner] CheckBallsAfterFill: поймано={caught.Count} осталось={_balls.Count}");
-            return _balls.Count == 0;
+            return caught.Count;
+        }
+
+        public IReadOnlyList<Vector2> GetPositions()
+        {
+            var positions = new List<Vector2>(_balls.Count);
+            foreach (var b in _balls)
+                if (b.IsAlive) positions.Add(b.Position);
+            return positions;
         }
 
         public bool RemoveOneBall()

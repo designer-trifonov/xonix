@@ -9,7 +9,7 @@ namespace HippoGame.Trail
     [RequireComponent(typeof(LineRenderer))]
     public class TrailLineRenderer : MonoBehaviour, ITrailRenderer
     {
-        private const float LineWidth = 0.05f;
+        private const float LineWidth = 0.10f;
         private const int   MaxPoints = 2000;
 
         private LineRenderer  _lr;
