@@ -103,7 +103,8 @@ namespace HippoGame.Core
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
                 _particleEffects != null ? container.Resolve<IParticleService>() : null,
-                container.Resolve<IBallSpawner>()
+                container.Resolve<IBallSpawner>(),
+                _movementTrail
             );
 
             _hippoGridInteractor.OnHit += () =>

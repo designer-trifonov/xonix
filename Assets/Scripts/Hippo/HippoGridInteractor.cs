@@ -14,6 +14,7 @@ namespace HippoGame.Hippo
         private IGridService     _grid;
         private IFillService     _fill;
         private ITrailService    _trail;
+        private ITrailRenderer   _trailRenderer;
         private IParticleService _particles;
         private IBallSpawner     _ballSpawner;
         private Transform        _hippoTransform;
@@ -31,11 +32,13 @@ namespace HippoGame.Hippo
 
         public void Inject(IGridService grid, IFillService fill, ITrailService trail,
             Transform hippoTransform, IMovementBehaviour movement,
-            IParticleService particles = null, IBallSpawner ballSpawner = null)
+            IParticleService particles = null, IBallSpawner ballSpawner = null,
+            ITrailRenderer trailRenderer = null)
         {
             _grid           = grid;
             _fill           = fill;
             _trail          = trail;
+            _trailRenderer  = trailRenderer;
             _particles      = particles;
             _ballSpawner    = ballSpawner;
             _hippoTransform = hippoTransform;
@@ -139,6 +142,7 @@ namespace HippoGame.Hippo
                     // Врезались в собственный трейл — смерть
                     ClearTrailCells();
                     _trail.Clear();
+                    _trailRenderer?.Clear();
                     _isDrawing     = false;
                     _hitInProgress = true;
                     Debug.Log("[HippoGridInteractor] Врезался в свой трейл — смерть");
@@ -166,6 +170,7 @@ namespace HippoGame.Hippo
                     {
                         ClearTrailCells();
                         _trail.Clear();
+                        _trailRenderer?.Clear();
                         _hitInProgress = false;
                         Debug.Log("[HippoGridInteractor] После хита — без заливки");
                     }
@@ -173,6 +178,7 @@ namespace HippoGame.Hippo
                     {
                         _fill.Fill(_grid, new List<Vector2Int>(_trail.Points), _ballSpawner?.GetPositions());
                         _trail.Clear();
+                        _trailRenderer?.Clear();
                         Debug.Log("[HippoGridInteractor] Заливка выполнена");
                         OnZoneFilled?.Invoke();
                     }

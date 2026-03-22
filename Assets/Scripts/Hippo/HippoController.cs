@@ -52,15 +52,41 @@ namespace HippoGame.Hippo
 
             Vector2 inputDir = _input.GetDirection();
 
-            // Блокируем обратное направление только во время движения.
-            // Если стоим — сбрасываем currentDirection, запрет снимается.
-            if (_movement.Stopped)
-                _currentDirection = Vector2.zero;
-            else if (inputDir == -_currentDirection)
-                inputDir = Vector2.zero;
+            if (inputDir != Vector2.zero)
+            {
+                // Блокируем обратное направление только во время движения.
+                // Если стоим — сбрасываем currentDirection, запрет снимается.
+                if (_movement.Stopped)
+                {
+                    _currentDirection = Vector2.zero;
+                    Debug.Log($"[HippoController] Ввод {inputDir} | Stopped=true → сброс запрета, принимаем");
+                }
+                else if (inputDir == -_currentDirection)
+                {
+                    Debug.Log($"[HippoController] Ввод {inputDir} ЗАБЛОКИРОВАН — обратное направление (current={_currentDirection})");
+                    inputDir = Vector2.zero;
+                }
+                else
+                {
+                    Debug.Log($"[HippoController] Ввод {inputDir} принят (current={_currentDirection} stopped={_movement.Stopped})");
+                }
+            }
 
             Rect bounds = _boundary.GetBounds();
             _movement.Tick(transform, ref _currentDirection, inputDir, bounds, _collision);
+
+            // Снап к центру ячейки по перпендикулярной оси движения
+            if (_currentDirection != Vector2.zero && _grid != null)
+            {
+                Vector3    pos      = transform.position;
+                Vector2Int cell     = _grid.WorldToCell(pos);
+                Vector2    cellWorld = _grid.CellToWorld(cell);
+
+                if (_currentDirection.x != 0) pos.y = cellWorld.y;
+                else                          pos.x = cellWorld.x;
+
+                transform.position = pos;
+            }
         }
 
 #if UNITY_EDITOR

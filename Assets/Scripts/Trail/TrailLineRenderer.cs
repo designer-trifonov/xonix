@@ -18,6 +18,7 @@ namespace HippoGame.Trail
         private Vector3       _lastPos;
         private Vector3[]     _positions = new Vector3[MaxPoints];
         private int           _count;
+        private bool          _wasDrawing;
 
         private void Awake()
         {
@@ -45,12 +46,15 @@ namespace HippoGame.Trail
         {
             if (_hippo == null) return;
 
-            // Рисуем только когда активно рисование — не на стене, не после хита
-            if (_drawingState != null && !_drawingState.IsDrawing)
-            {
-                if (_count > 0) Clear();
-                return;
-            }
+            bool isDrawing = _drawingState == null || _drawingState.IsDrawing;
+
+            // Начало нового рисования — чистим старые точки
+            if (isDrawing && !_wasDrawing)
+                Clear();
+
+            _wasDrawing = isDrawing;
+
+            if (!isDrawing) return;
 
             Vector3 pos = _hippo.position;
             pos.z = -0.1f;
