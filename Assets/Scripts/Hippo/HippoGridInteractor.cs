@@ -79,7 +79,13 @@ namespace HippoGame.Hippo
             Vector2Int step;
             int        steps;
 
-            if (Mathf.Abs(diff.x) >= Mathf.Abs(diff.y))
+            bool diagonal = diff.x != 0 && diff.y != 0;
+            if (diagonal)
+            {
+                steps = Mathf.Max(Mathf.Abs(diff.x), Mathf.Abs(diff.y));
+                step  = new Vector2Int(diff.x > 0 ? 1 : -1, diff.y > 0 ? 1 : -1);
+            }
+            else if (Mathf.Abs(diff.x) >= Mathf.Abs(diff.y))
             {
                 steps = Mathf.Abs(diff.x);
                 step  = new Vector2Int(diff.x > 0 ? 1 : -1, 0);

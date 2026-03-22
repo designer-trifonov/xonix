@@ -85,11 +85,12 @@ namespace HippoGame.Hippo
             Rect bounds = _boundary.GetBounds();
             _movement.Tick(transform, ref _currentDirection, inputDir, bounds, _collision);
 
-            // Снап к центру ячейки по перпендикулярной оси движения
-            if (_currentDirection != Vector2.zero && _grid != null)
+            // Снап к центру ячейки по перпендикулярной оси (только для осевого движения)
+            bool isDiagonal = _currentDirection.x != 0 && _currentDirection.y != 0;
+            if (!isDiagonal && _currentDirection != Vector2.zero && _grid != null)
             {
-                Vector3    pos      = transform.position;
-                Vector2Int cell     = _grid.WorldToCell(pos);
+                Vector3    pos       = transform.position;
+                Vector2Int cell      = _grid.WorldToCell(pos);
                 Vector2    cellWorld = _grid.CellToWorld(cell);
 
                 if (_currentDirection.x != 0) pos.y = cellWorld.y;
