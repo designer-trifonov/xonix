@@ -93,7 +93,8 @@ namespace HippoGame.Core
                 container.Resolve<IMovementBehaviour>(),
                 container.Resolve<IBoundaryService>(),
                 container.Resolve<ICollisionService>(),
-                container.Resolve<IGridService>()
+                container.Resolve<IGridService>(),
+                _hippoGridInteractor
             );
 
             _hippoGridInteractor.Inject(

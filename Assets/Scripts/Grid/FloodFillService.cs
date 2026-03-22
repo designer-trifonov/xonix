@@ -29,22 +29,29 @@ namespace HippoGame.Grid
 
             Debug.Log($"[FloodFillService] Найдено регионов: {regions.Count}");
 
-            // Наименьший регион без шара = внутренний, заливаем его
-            int minIdx = -1;
-            for (int i = 0; i < regions.Count; i++)
+            if (regions.Count == 0)
             {
-                if (minIdx == -1 || regions[i].Count < regions[minIdx].Count)
-                    minIdx = i;
+                Debug.Log("[FloodFillService] Регионов нет — ничего не заливаем");
+                return;
             }
 
+            // Наибольший регион = внешний (соединён с основным полем).
+            // Все остальные — внутренние, заливаем (если нет шара).
+            int maxIdx = 0;
+            for (int i = 1; i < regions.Count; i++)
+                if (regions[i].Count > regions[maxIdx].Count)
+                    maxIdx = i;
+
             int filled = 0;
-            if (minIdx == -1)
+            for (int i = 0; i < regions.Count; i++)
             {
-                Debug.Log("[FloodFillService] БРЕШЬ: регионов нет");
-            }
-            else
-            {
-                var region    = regions[minIdx];
+                if (i == maxIdx)
+                {
+                    Debug.Log($"[FloodFillService]   Регион {i}: {regions[i].Count} кл — ВНЕШНИЙ (наибольший), пропуск");
+                    continue;
+                }
+
+                var region    = regions[i];
                 var regionSet = new HashSet<Vector2Int>(region);
                 bool hasBall  = false;
                 Vector2 ballPos = default;
@@ -57,21 +64,35 @@ namespace HippoGame.Grid
                     }
 
                 if (hasBall)
-                    Debug.Log($"[FloodFillService]   ШАР внутри наименьшего ({region.Count} кл) pos={ballPos} — не закрашиваем");
+                    Debug.Log($"[FloodFillService]   Регион {i}: {region.Count} кл — ШАР внутри pos={ballPos}, пропуск");
                 else
                 {
                     foreach (var c in region)
                         grid.SetCell(c.x, c.y, CellState.Filled);
-                    Debug.Log($"[FloodFillService]   ОК: закрашен наименьший регион ({region.Count} кл)");
+                    Debug.Log($"[FloodFillService]   Регион {i}: {region.Count} кл — ЗАЛИТ");
                     filled++;
                 }
             }
 
             // Trail → Filled
+            int trailCells = 0;
             for (int x = 0; x < grid.Columns; x++)
             for (int y = 0; y < grid.Rows; y++)
                 if (grid.GetCell(x, y) == CellState.Trail)
+                {
                     grid.SetCell(x, y, CellState.Filled);
+                    trailCells++;
+                }
+
+            // Итог: всего закрашено
+            int totalFilled = 0;
+            int total       = grid.Columns * grid.Rows;
+            for (int x = 0; x < grid.Columns; x++)
+            for (int y = 0; y < grid.Rows; y++)
+                if (grid.GetCell(x, y) == CellState.Filled) totalFilled++;
+
+            float pct = total > 0 ? totalFilled * 100f / total : 0f;
+            Debug.Log($"[FloodFillService] ══ ИТОГ ══ залито регионов={filled} трейл={trailCells} кл | всего закрашено={totalFilled}/{total} ({pct:F1}%)");
         }
 
         private static List<Vector2Int> FloodRegion(IGridService grid,

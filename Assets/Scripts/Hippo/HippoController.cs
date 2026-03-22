@@ -11,16 +11,19 @@ namespace HippoGame.Hippo
         private IBoundaryService   _boundary;
         private ICollisionService  _collision;
         private IGridService       _grid;
+        private IDrawingState      _drawingState;
         private Vector2            _currentDirection;
 
         public void Inject(IInputProvider input, IMovementBehaviour movement,
-            IBoundaryService boundary, ICollisionService collision, IGridService grid)
+            IBoundaryService boundary, ICollisionService collision, IGridService grid,
+            IDrawingState drawingState = null)
         {
-            _input     = input;
-            _movement  = movement;
-            _boundary  = boundary;
-            _collision = collision;
-            _grid      = grid;
+            _input        = input;
+            _movement     = movement;
+            _boundary     = boundary;
+            _collision    = collision;
+            _grid         = grid;
+            _drawingState = drawingState;
             Debug.Log("[HippoController] Inject — все зависимости получены");
         }
 
@@ -56,19 +59,26 @@ namespace HippoGame.Hippo
             {
                 // Блокируем обратное направление только во время движения.
                 // Если стоим — сбрасываем currentDirection, запрет снимается.
+                bool isDrawing = _drawingState?.IsDrawing ?? false;
+
                 if (_movement.Stopped)
                 {
                     _currentDirection = Vector2.zero;
-                    Debug.Log($"[HippoController] Ввод {inputDir} | Stopped=true → сброс запрета, принимаем");
+                    Debug.Log($"[HippoController] Ввод {inputDir} | Stopped=true → принимаем");
+                }
+                else if (!isDrawing)
+                {
+                    // На бордере без трейла — разворот разрешён всегда
+                    Debug.Log($"[HippoController] Ввод {inputDir} | не рисуем → принимаем (current={_currentDirection})");
                 }
                 else if (inputDir == -_currentDirection)
                 {
-                    Debug.Log($"[HippoController] Ввод {inputDir} ЗАБЛОКИРОВАН — обратное направление (current={_currentDirection})");
+                    Debug.Log($"[HippoController] Ввод {inputDir} ЗАБЛОКИРОВАН — обратное во время рисования (current={_currentDirection})");
                     inputDir = Vector2.zero;
                 }
                 else
                 {
-                    Debug.Log($"[HippoController] Ввод {inputDir} принят (current={_currentDirection} stopped={_movement.Stopped})");
+                    Debug.Log($"[HippoController] Ввод {inputDir} принят (current={_currentDirection} drawing={isDrawing})");
                 }
             }
 

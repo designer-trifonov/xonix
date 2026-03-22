@@ -153,6 +153,7 @@ namespace HippoGame.Hippo
                 if (isEdge || state == CellState.Filled)
                 {
                     _isDrawing = false;
+                    Debug.Log($"[HippoGridInteractor] ══ СТОП ══ ячейка=({cell.x},{cell.y}) трейл={_trail.Points.Count} кл");
 
                     CommitSegment(_segmentStartCell, prevCell);
 
@@ -164,7 +165,6 @@ namespace HippoGame.Hippo
 
                     Vector3 dockWorld = _grid.CellToWorld(cell);
                     _particles?.PlayDock(new Vector3(dockWorld.x, dockWorld.y, -0.1f));
-                    Debug.Log($"[HippoGridInteractor] Трейл ЗАКРЫТ в ({cell.x},{cell.y}) len={_trail.Points.Count}");
 
                     if (_hitInProgress)
                     {
@@ -172,14 +172,14 @@ namespace HippoGame.Hippo
                         _trail.Clear();
                         _trailRenderer?.Clear();
                         _hitInProgress = false;
-                        Debug.Log("[HippoGridInteractor] После хита — без заливки");
+                        Debug.Log("[HippoGridInteractor] Хит — заливки нет");
                     }
                     else
                     {
+                        Debug.Log($"[HippoGridInteractor] → начинаем заливку (трейл={_trail.Points.Count} кл)");
                         _fill.Fill(_grid, new List<Vector2Int>(_trail.Points), _ballSpawner?.GetPositions());
                         _trail.Clear();
                         _trailRenderer?.Clear();
-                        Debug.Log("[HippoGridInteractor] Заливка выполнена");
                         OnZoneFilled?.Invoke();
                     }
                 }
