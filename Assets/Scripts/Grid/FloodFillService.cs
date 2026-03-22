@@ -12,7 +12,7 @@ namespace HippoGame.Grid
 
         public void Fill(IGridService grid, List<Vector2Int> trail, IReadOnlyList<Vector2> ballPositions)
         {
-            Debug.Log($"[FloodFillService] Fill | trail={trail.Count}");
+            Debug.Log($"[FloodFillService] ── АНАЛИЗ ЗОНЫ ── trail={trail.Count} кл");
 
             HashSet<Vector2Int>    visited = new();
             List<List<Vector2Int>> regions = new();
@@ -27,8 +27,20 @@ namespace HippoGame.Grid
                 regions.Add(FloodRegion(grid, visited, cell));
             }
 
-            if (regions.Count > 0)
+            if (regions.Count == 0)
             {
+                Debug.Log("[FloodFillService] Нет пустых регионов — нечего заливать");
+            }
+            else if (regions.Count == 1)
+            {
+                Debug.Log($"[FloodFillService] БРЕШЬ: найден только 1 регион ({regions[0].Count} кл) — трейл не замкнул зону");
+            }
+            else
+            {
+                Debug.Log($"[FloodFillService] Найдено регионов: {regions.Count}");
+                for (int i = 0; i < regions.Count; i++)
+                    Debug.Log($"[FloodFillService]   регион[{i}] = {regions[i].Count} кл");
+
                 int minIdx = 0;
                 for (int i = 1; i < regions.Count; i++)
                     if (regions[i].Count < regions[minIdx].Count)
@@ -37,18 +49,22 @@ namespace HippoGame.Grid
                 var minRegion    = regions[minIdx];
                 var minRegionSet = new HashSet<Vector2Int>(minRegion);
                 bool hasBall     = false;
+                Vector2 ballCell = default;
 
                 if (ballPositions != null)
                     foreach (Vector2 bp in ballPositions)
-                        if (minRegionSet.Contains(grid.WorldToCell(bp))) { hasBall = true; break; }
+                    {
+                        Vector2Int bc = grid.WorldToCell(bp);
+                        if (minRegionSet.Contains(bc)) { hasBall = true; ballCell = bp; break; }
+                    }
 
                 if (hasBall)
-                    Debug.Log($"[FloodFillService] Шар внутри наименьшего региона ({minRegion.Count} кл) — не закрашиваем");
+                    Debug.Log($"[FloodFillService] ШАР в наименьшем регионе [{minIdx}] ({minRegion.Count} кл) pos={ballCell} — не закрашиваем");
                 else
                 {
                     foreach (Vector2Int c in minRegion)
                         grid.SetCell(c.x, c.y, CellState.Filled);
-                    Debug.Log($"[FloodFillService] Закрашен наименьший регион ({minRegion.Count} кл)");
+                    Debug.Log($"[FloodFillService] ОК: закрашен регион [{minIdx}] ({minRegion.Count} кл)");
                 }
             }
 
