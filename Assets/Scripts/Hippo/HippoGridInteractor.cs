@@ -179,12 +179,9 @@ namespace HippoGame.Hippo
                     _isDrawing = true;
                     GameLogger.Log("[TRAIL CLEAR] причина: начало нового рисования");
                     _trail.Clear();
-                    if (_grid.IsEdge(_segmentStartCell) &&
-                        _grid.GetCell(_segmentStartCell.x, _segmentStartCell.y) == CellState.Empty)
-                    {
+                    // Добавляем стартовую (edge) клетку в trail для непрерывности
+                    if (_grid.IsEdge(_segmentStartCell))
                         _trail.AddPoint(_segmentStartCell);
-                        _grid.SetCell(_segmentStartCell.x, _segmentStartCell.y, CellState.Trail);
-                    }
 
                     // Сразу красим первую клетку — иначе будет пропуск
                     _trail.AddPoint(cell);

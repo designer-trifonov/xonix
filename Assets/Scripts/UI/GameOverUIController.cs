@@ -1,8 +1,8 @@
 using System;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using HippoGame.Ads;
 
 namespace HippoGame.UI
 {
@@ -16,60 +16,55 @@ namespace HippoGame.UI
         public event Action OnWatchAd;
         public event Action OnRestart;
 
+        private YandexAdsService _ads;
+
         private void Awake()
         {
             _panel.SetActive(false);
             _watchAdButton.onClick.AddListener(OnWatchAdClicked);
             _restartButton.onClick.AddListener(OnRestartClicked);
+            _ads = FindObjectOfType<YandexAdsService>();
         }
 
         public void Show()
         {
             _panel.SetActive(true);
             Time.timeScale = 0f;
-            Debug.Log("[GameOverUIController] Show — игра на паузе");
         }
 
         public void Hide()
         {
             _panel.SetActive(false);
             Time.timeScale = 1f;
-            Debug.Log("[GameOverUIController] Hide — игра возобновлена");
         }
 
         private void OnWatchAdClicked()
         {
-            Debug.Log("[GameOverUIController] OnWatchAdClicked");
-            StartCoroutine(MockAd());
-        }
-
-        private IEnumerator MockAd()
-        {
-            Debug.Log("[GameOverUIController] MockAd — старт");
             _watchAdButton.interactable = false;
             _restartButton.interactable = false;
+            if (_adButtonText != null) _adButtonText.text = "Загрузка...";
 
-            for (int i = 5; i > 0; i--)
-            {
-                if (_adButtonText != null)
-                    _adButtonText.text = $"Реклама... {i}";
-                yield return new WaitForSecondsRealtime(1f);
-            }
-
-            if (_adButtonText != null)
-                _adButtonText.text = "Продолжить за рекламу";
-
-            _watchAdButton.interactable = true;
-            _restartButton.interactable = true;
-
-            Debug.Log("[GameOverUIController] MockAd — завершена, продолжаем");
-            Hide();
-            OnWatchAd?.Invoke();
+            _ads.ShowRewarded(
+                onSuccess: () =>
+                {
+                    if (_adButtonText != null) _adButtonText.text = "Продолжить за рекламу";
+                    _watchAdButton.interactable = true;
+                    _restartButton.interactable = true;
+                    Hide();
+                    OnWatchAd?.Invoke();
+                },
+                onFailed: () =>
+                {
+                    if (_adButtonText != null) _adButtonText.text = "Продолжить за рекламу";
+                    _watchAdButton.interactable = true;
+                    _restartButton.interactable = true;
+                    Debug.Log("[GameOverUIController] Реклама не досмотрена");
+                }
+            );
         }
 
         private void OnRestartClicked()
         {
-            Debug.Log("[GameOverUIController] OnRestartClicked");
             Hide();
             OnRestart?.Invoke();
         }

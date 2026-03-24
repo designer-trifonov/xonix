@@ -103,7 +103,10 @@ namespace HippoGame.Grid
             Debug.Log($"[GameGrid] ResetCells — очистка {_columns}x{_rows}");
             for (int x = 0; x < _columns; x++)
             for (int y = 0; y < _rows; y++)
-                SetCell(x, y, CellState.Empty);
+            {
+                bool edge = x == 0 || x == _columns - 1 || y == 0 || y == _rows - 1;
+                SetCell(x, y, edge ? CellState.Border : CellState.Empty);
+            }
         }
 
         public void Refresh(IGridService grid)

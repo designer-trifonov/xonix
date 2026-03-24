@@ -49,7 +49,7 @@ namespace HippoGame.Core
             _movement.Speed = _gameState.HippoSpeed;
 
             if (_ballSpawner != null)
-                _ballSpawner.SpawnBalls(0, _gameState.BallSpeed); // TODO: вернуть _gameState.BallCount
+                _ballSpawner.SpawnBalls(_gameState.BallCount, _gameState.BallSpeed);
             else
                 Debug.LogWarning("[LevelManager] IBallSpawner == null — шары не созданы");
 
