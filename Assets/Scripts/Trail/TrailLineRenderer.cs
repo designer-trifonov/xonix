@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.Interfaces;
+using HippoGame.Core;
 
 namespace HippoGame.Trail
 {
@@ -10,15 +12,12 @@ namespace HippoGame.Trail
     public class TrailLineRenderer : MonoBehaviour, ITrailRenderer
     {
         private const float LineWidth = 0.10f;
-        private const int   MaxPoints = 2000;
 
-        private LineRenderer  _lr;
-        private Transform     _hippo;
-        private IDrawingState _drawingState;
-        private Vector3       _lastPos;
-        private Vector3[]     _positions = new Vector3[MaxPoints];
-        private int           _count;
-        private bool          _wasDrawing;
+        private LineRenderer     _lr;
+        private Transform        _hippo;
+        private IDrawingState    _drawingState;
+        private Vector3          _lastPos;
+        private List<Vector3>    _positions = new List<Vector3>();
 
         private void Awake()
         {
@@ -39,7 +38,7 @@ namespace HippoGame.Trail
             _hippo        = hippo;
             _drawingState = drawingState;
             _lastPos      = hippo.position;
-            Debug.Log("[TrailLineRenderer] Inject — hippo transform получен");
+            GameLogger.Log("[TrailLineRenderer] Inject — hippo transform получен");
         }
 
         private void Update()
@@ -48,12 +47,6 @@ namespace HippoGame.Trail
 
             bool isDrawing = _drawingState == null || _drawingState.IsDrawing;
 
-            // Начало нового рисования — чистим старые точки
-            if (isDrawing && !_wasDrawing)
-                Clear();
-
-            _wasDrawing = isDrawing;
-
             if (!isDrawing) return;
 
             Vector3 pos = _hippo.position;
@@ -61,22 +54,19 @@ namespace HippoGame.Trail
 
             if (pos != _lastPos)
             {
-                if (_count < MaxPoints)
-                {
-                    _positions[_count] = pos;
-                    _count++;
-                    _lr.positionCount = _count;
-                    _lr.SetPosition(_count - 1, pos);
-                }
+                _positions.Add(pos);
+                _lr.positionCount = _positions.Count;
+                _lr.SetPosition(_positions.Count - 1, pos);
                 _lastPos = pos;
             }
         }
 
         public void Clear()
         {
-            _count = 0;
+            _positions.Clear();
             _lr.positionCount = 0;
-            Debug.Log("[TrailLineRenderer] Clear");
+            _lastPos = Vector3.positiveInfinity; // сброс, чтобы первая точка всегда добавилась
+            GameLogger.Log("[TRAIL CLEAR] причина: TrailLineRenderer.Clear() вызван явно");
         }
     }
 }

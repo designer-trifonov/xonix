@@ -12,29 +12,22 @@ namespace HippoGame.Input
             var kb = Keyboard.current;
             if (kb == null) return Vector2.zero;
 
-            bool up    = kb.upArrowKey.isPressed    || kb.wKey.isPressed;
-            bool down  = kb.downArrowKey.isPressed  || kb.sKey.isPressed;
-            bool left  = kb.leftArrowKey.isPressed  || kb.aKey.isPressed;
-            bool right = kb.rightArrowKey.isPressed || kb.dKey.isPressed;
+            // Срабатываем только когда нажата новая клавиша
+            bool anyNew = kb.upArrowKey.wasPressedThisFrame    || kb.wKey.wasPressedThisFrame
+                       || kb.downArrowKey.wasPressedThisFrame  || kb.sKey.wasPressedThisFrame
+                       || kb.leftArrowKey.wasPressedThisFrame  || kb.aKey.wasPressedThisFrame
+                       || kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame;
 
-            bool upNew    = kb.upArrowKey.wasPressedThisFrame    || kb.wKey.wasPressedThisFrame;
-            bool downNew  = kb.downArrowKey.wasPressedThisFrame  || kb.sKey.wasPressedThisFrame;
-            bool leftNew  = kb.leftArrowKey.wasPressedThisFrame  || kb.aKey.wasPressedThisFrame;
-            bool rightNew = kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame;
+            if (!anyNew) return Vector2.zero;
 
-            // Диагональ: одна клавиша нажата в этом кадре, другая уже зажата
-            if ((upNew   && right) || (rightNew && up))   return new Vector2( 1,  1).normalized;
-            if ((upNew   && left)  || (leftNew  && up))   return new Vector2(-1,  1).normalized;
-            if ((downNew && right) || (rightNew && down)) return new Vector2( 1, -1).normalized;
-            if ((downNew && left)  || (leftNew  && down)) return new Vector2(-1, -1).normalized;
+            // Читаем все зажатые клавиши — вектор собирается автоматически
+            float x = ((kb.rightArrowKey.isPressed || kb.dKey.isPressed) ? 1f : 0f)
+                    - ((kb.leftArrowKey.isPressed  || kb.aKey.isPressed) ? 1f : 0f);
+            float y = ((kb.upArrowKey.isPressed    || kb.wKey.isPressed) ? 1f : 0f)
+                    - ((kb.downArrowKey.isPressed  || kb.sKey.isPressed) ? 1f : 0f);
 
-            // Одиночные направления
-            if (downNew)  return Vector2.down;
-            if (upNew)    return Vector2.up;
-            if (leftNew)  return Vector2.left;
-            if (rightNew) return Vector2.right;
-
-            return Vector2.zero;
+            if (x == 0f && y == 0f) return Vector2.zero;
+            return new Vector2(x, y); // чистые компоненты: -1, 0, 1
         }
     }
 }

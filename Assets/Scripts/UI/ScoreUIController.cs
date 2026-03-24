@@ -14,6 +14,7 @@ namespace HippoGame.UI
 
         public void Initialize()
         {
+            if (_text == null) _text = GameObject.Find("Score_Text (TMP)")?.GetComponent<TMP_Text>();
             _state.OnChanged += Refresh;
             Refresh();
             Debug.Log("[ScoreUIController] Initialize");

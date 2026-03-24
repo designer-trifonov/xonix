@@ -124,6 +124,7 @@ namespace HippoGame.Grid
             return _cells[x, y] switch
             {
                 CellState.Filled => FillColor(x, y),
+                CellState.Trail  => Color.yellow,
                 _                => Color.clear
             };
         }

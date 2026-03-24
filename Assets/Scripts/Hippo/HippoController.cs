@@ -57,47 +57,14 @@ namespace HippoGame.Hippo
 
             if (inputDir != Vector2.zero)
             {
-                // Блокируем обратное направление только во время движения.
-                // Если стоим — сбрасываем currentDirection, запрет снимается.
-                bool isDrawing = _drawingState?.IsDrawing ?? false;
-
                 if (_movement.Stopped)
-                {
                     _currentDirection = Vector2.zero;
-                    Debug.Log($"[HippoController] Ввод {inputDir} | Stopped=true → принимаем");
-                }
-                else if (!isDrawing)
-                {
-                    // На бордере без трейла — разворот разрешён всегда
-                    Debug.Log($"[HippoController] Ввод {inputDir} | не рисуем → принимаем (current={_currentDirection})");
-                }
-                else if (inputDir == -_currentDirection)
-                {
-                    Debug.Log($"[HippoController] Ввод {inputDir} ЗАБЛОКИРОВАН — обратное во время рисования (current={_currentDirection})");
+                else if (IsOpposite(inputDir, _currentDirection))
                     inputDir = Vector2.zero;
-                }
-                else
-                {
-                    Debug.Log($"[HippoController] Ввод {inputDir} принят (current={_currentDirection} drawing={isDrawing})");
-                }
             }
 
             Rect bounds = _boundary.GetBounds();
             _movement.Tick(transform, ref _currentDirection, inputDir, bounds, _collision);
-
-            // Снап к центру ячейки по перпендикулярной оси (только для осевого движения)
-            bool isDiagonal = _currentDirection.x != 0 && _currentDirection.y != 0;
-            if (!isDiagonal && _currentDirection != Vector2.zero && _grid != null)
-            {
-                Vector3    pos       = transform.position;
-                Vector2Int cell      = _grid.WorldToCell(pos);
-                Vector2    cellWorld = _grid.CellToWorld(cell);
-
-                if (_currentDirection.x != 0) pos.y = cellWorld.y;
-                else                          pos.x = cellWorld.x;
-
-                transform.position = pos;
-            }
         }
 
 #if UNITY_EDITOR
@@ -127,6 +94,15 @@ namespace HippoGame.Hippo
         {
             _currentDirection = Vector2.zero;
             _movement.Resume();
+        }
+
+        // Возвращает true если a содержит хотя бы один компонент, противоположный ненулевому компоненту b.
+        // Блокирует частичный разворот при диагональном движении (напр. (1,1) → (-1,0)).
+        private static bool IsOpposite(Vector2 a, Vector2 b)
+        {
+            if (a == Vector2.zero || b == Vector2.zero) return false;
+            return System.Math.Sign(a.x) == -System.Math.Sign(b.x)
+                && System.Math.Sign(a.y) == -System.Math.Sign(b.y);
         }
 
         private void PlaceAtSpawn()

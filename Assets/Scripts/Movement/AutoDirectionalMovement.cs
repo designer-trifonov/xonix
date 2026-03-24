@@ -46,7 +46,7 @@ namespace HippoGame.Movement
             if (currentDirection == Vector2.zero || Stopped)
                 return;
 
-            Vector3 next = target.position + (Vector3)(currentDirection * Speed * Time.deltaTime);
+            Vector3 next = target.position + (Vector3)(currentDirection.normalized * Speed * Time.deltaTime);
             next.x = Mathf.Clamp(next.x, bounds.xMin, bounds.xMax);
             next.y = Mathf.Clamp(next.y, bounds.yMin, bounds.yMax);
 

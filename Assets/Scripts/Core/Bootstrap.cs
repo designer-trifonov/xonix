@@ -4,11 +4,11 @@ using HippoGame.Zone;
 using HippoGame.Input;
 using HippoGame.Movement;
 using HippoGame.Grid;
-using HippoGame.Trail;
 using HippoGame.Hippo;
 using HippoGame.Ball;
 using HippoGame.UI;
 using HippoGame.FX;
+using HippoGame.Trail;
 
 namespace HippoGame.Core
 {
@@ -23,7 +23,6 @@ namespace HippoGame.Core
         [SerializeField] private HippoController           _hippoController;
         [SerializeField] private GameGrid                  _gameGrid;
         [SerializeField] private HippoGridInteractor       _hippoGridInteractor;
-        [SerializeField] private TrailLineRenderer         _movementTrail;
         [SerializeField] private ParticleEffectsService    _particleEffects;
         [SerializeField] private BallSpawner               _ballSpawner;
 
@@ -48,17 +47,16 @@ namespace HippoGame.Core
         {
             var container = new DiContainer();
             var gameState = new GameState(_levelConfig);
-            var movement  = new AutoDirectionalMovement();
-
             container.Register<GameState>(gameState);
             container.Register<IGameState>(gameState);
             container.Register<IBoundaryService>(_gameZone);
             container.Register<IInputProvider>(new KeyboardInputProvider());
-            container.Register<AutoDirectionalMovement>(movement);
-            container.Register<IMovementBehaviour>(movement);
             container.Register<HippoController>(_hippoController);
             container.Register<IGridService>(_gameGrid);
             container.Register<IGridRenderer>(_gameGrid);
+            var movement = new CellMovement(container.Resolve<IGridService>());
+            container.Register<CellMovement>(movement);
+            container.Register<IMovementBehaviour>(movement);
             container.Register<IFillService>(new FloodFillService());
             var grid = container.Resolve<IGridService>();
             container.Register<ICollisionService>(new DrawingAwareCollisionService(
@@ -85,9 +83,6 @@ namespace HippoGame.Core
             var state = container.Resolve<GameState>();
             var grid  = container.Resolve<IGridService>();
 
-            if (_movementTrail != null)
-                _movementTrail.Inject(_hippoController.transform, _hippoGridInteractor);
-
             _hippoController.Inject(
                 container.Resolve<IInputProvider>(),
                 container.Resolve<IMovementBehaviour>(),
@@ -104,14 +99,13 @@ namespace HippoGame.Core
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
                 _particleEffects != null ? container.Resolve<IParticleService>() : null,
-                container.Resolve<IBallSpawner>(),
-                _movementTrail
+                container.Resolve<IBallSpawner>()
             );
 
             _hippoGridInteractor.OnHit += () =>
             {
                 container.Resolve<IGameState>().LoseLife();
-                _movementTrail?.Clear();
+                Debug.Log("[TRAIL CLEAR] причина: Bootstrap.OnHit → LoseLife");
             };
 
             if (_ballSpawner != null)

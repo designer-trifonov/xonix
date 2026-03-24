@@ -19,7 +19,11 @@ namespace HippoGame.UI
             _grid  = grid;
         }
 
-        public void Initialize() => Debug.Log("[FillPercentUIController] Initialize");
+        public void Initialize()
+        {
+            if (_text == null) _text = GameObject.Find("Percent_Text (TMP)")?.GetComponent<TMP_Text>();
+            Debug.Log("[FillPercentUIController] Initialize");
+        }
 
         private void LateUpdate()
         {
