@@ -8,8 +8,12 @@ namespace HippoGame.Grid
     /// Edge клетки помечены Border — flood fill не протекает вдоль стен.
     public class FloodFillService : IFillService
     {
-        private static readonly Vector2Int[] Cardinals =
-            { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+        private static readonly Vector2Int[] Neighbors =
+        {
+            Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right,
+            new Vector2Int(1, 1), new Vector2Int(1, -1),
+            new Vector2Int(-1, 1), new Vector2Int(-1, -1)
+        };
 
         public void Fill(IGridService grid, List<Vector2Int> trail, IReadOnlyList<Vector2> ballPositions)
         {
@@ -70,7 +74,7 @@ namespace HippoGame.Grid
                 var cell = queue.Dequeue();
                 region.Add(cell);
 
-                foreach (var dir in Cardinals)
+                foreach (var dir in Neighbors)
                 {
                     var n = cell + dir;
                     if (!grid.IsInBounds(n))                       continue;

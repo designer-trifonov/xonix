@@ -29,6 +29,10 @@ namespace HippoGame.Input
             int y = (up    ? 1 : 0) - (down ? 1 : 0);
             var current = new Vector2Int(x, y);
 
+            // Все клавиши отпущены — сбрасываем lastCommitted
+            if (current == Vector2Int.zero)
+                _lastCommitted = Vector2Int.zero;
+
             // Направление изменилось
             if (current != _candidate)
             {

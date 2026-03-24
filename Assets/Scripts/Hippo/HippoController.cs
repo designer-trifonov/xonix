@@ -11,15 +11,17 @@ namespace HippoGame.Hippo
         private CellMovement     _movement;
         private IBoundaryService _boundary;
         private IGridService     _grid;
+        private IDrawingState    _drawingState;
 
         public void Inject(IInputProvider input, IMovementBehaviour movement,
             IBoundaryService boundary, ICollisionService collision, IGridService grid,
             IDrawingState drawingState = null)
         {
-            _input    = input;
-            _movement = movement as CellMovement;
-            _boundary = boundary;
-            _grid     = grid;
+            _input        = input;
+            _movement     = movement as CellMovement;
+            _boundary     = boundary;
+            _grid         = grid;
+            _drawingState = drawingState;
         }
 
         public void Initialize()
@@ -42,9 +44,14 @@ namespace HippoGame.Hippo
 
             Vector2Int input = _input.GetDirection();
 
-            // Проверка: можно ли сменить направление?
-            if (input != Vector2Int.zero && !DirectionGuard.IsReverse(_movement.Direction, input))
-                _movement.QueueDirection(input);
+            // Реверс запрещён ТОЛЬКО при рисовании trail внутри зоны.
+            // На границе / по filled — свободное движение в любую сторону.
+            if (input != Vector2Int.zero)
+            {
+                bool drawing = _drawingState != null && _drawingState.IsDrawing;
+                if (!drawing || !DirectionGuard.IsReverse(_movement.Direction, input))
+                    _movement.QueueDirection(input);
+            }
 
             _movement.Tick(transform, _boundary.GetBounds());
         }
