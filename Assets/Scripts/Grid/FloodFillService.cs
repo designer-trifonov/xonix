@@ -5,11 +5,19 @@ using HippoGame.Interfaces;
 namespace HippoGame.Grid
 {
     /// Flood fill 4-connected: находит регионы Empty клеток, заливает те, в которых нет шара.
-    /// Edge клетки помечены Border — flood fill не протекает вдоль стен.
+    /// Шар проверяется по ячейке + все 8 соседей (на случай если шар на Border/Trail/Filled).
     public class FloodFillService : IFillService
     {
         private static readonly Vector2Int[] Cardinals =
             { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+
+        private static readonly Vector2Int[] AllNeighbors =
+        {
+            new Vector2Int( 0,  1), new Vector2Int( 0, -1),
+            new Vector2Int( 1,  0), new Vector2Int(-1,  0),
+            new Vector2Int( 1,  1), new Vector2Int( 1, -1),
+            new Vector2Int(-1,  1), new Vector2Int(-1, -1)
+        };
 
         public void Fill(IGridService grid, List<Vector2Int> trail, IReadOnlyList<Vector2> ballPositions)
         {
@@ -27,22 +35,42 @@ namespace HippoGame.Grid
                 regions.Add(FloodRegion(grid, visited, cell));
             }
 
-            // 2. Заливаем регионы без шаров
-            var ballCells = new HashSet<Vector2Int>();
+            // 2. Собираем ячейки шаров — включая соседей, чтобы поймать шар на Border/Trail/Filled
+            var ballEmptyCells = new HashSet<Vector2Int>();
             if (ballPositions != null)
+            {
                 foreach (var bp in ballPositions)
-                    ballCells.Add(grid.WorldToCell(bp));
+                {
+                    var bc = grid.WorldToCell(bp);
+                    // Если шар на Empty — берём как есть
+                    if (grid.IsInBounds(bc) && grid.GetCell(bc.x, bc.y) == CellState.Empty)
+                    {
+                        ballEmptyCells.Add(bc);
+                    }
+                    else
+                    {
+                        // Шар на Border/Trail/Filled — ищем ближайшую Empty соседку
+                        foreach (var dir in AllNeighbors)
+                        {
+                            var n = bc + dir;
+                            if (grid.IsInBounds(n) && grid.GetCell(n.x, n.y) == CellState.Empty)
+                            {
+                                ballEmptyCells.Add(n);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
-            Debug.Log($"[FloodFillService] ballCells={ballCells.Count} позиции: {string.Join(", ", ballCells)}");
-            foreach (var bc in ballCells)
-                Debug.Log($"[FloodFillService] шар ячейка=({bc.x},{bc.y}) состояние={grid.GetCell(bc.x, bc.y)}");
+            Debug.Log($"[FloodFillService] шаров={ballPositions?.Count ?? 0} ballEmptyCells={ballEmptyCells.Count}");
 
             int filled = 0;
             foreach (var region in regions)
             {
                 bool hasBall = false;
                 foreach (var c in region)
-                    if (ballCells.Contains(c)) { hasBall = true; break; }
+                    if (ballEmptyCells.Contains(c)) { hasBall = true; break; }
 
                 Debug.Log($"[FloodFillService] регион size={region.Count} hasBall={hasBall}");
 
