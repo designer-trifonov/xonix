@@ -8,12 +8,8 @@ namespace HippoGame.Grid
     /// Edge клетки помечены Border — flood fill не протекает вдоль стен.
     public class FloodFillService : IFillService
     {
-        private static readonly Vector2Int[] Neighbors =
-        {
-            Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right,
-            new Vector2Int(1, 1), new Vector2Int(1, -1),
-            new Vector2Int(-1, 1), new Vector2Int(-1, -1)
-        };
+        private static readonly Vector2Int[] Cardinals =
+            { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
         public void Fill(IGridService grid, List<Vector2Int> trail, IReadOnlyList<Vector2> ballPositions)
         {
@@ -37,12 +33,18 @@ namespace HippoGame.Grid
                 foreach (var bp in ballPositions)
                     ballCells.Add(grid.WorldToCell(bp));
 
+            Debug.Log($"[FloodFillService] ballCells={ballCells.Count} позиции: {string.Join(", ", ballCells)}");
+            foreach (var bc in ballCells)
+                Debug.Log($"[FloodFillService] шар ячейка=({bc.x},{bc.y}) состояние={grid.GetCell(bc.x, bc.y)}");
+
             int filled = 0;
             foreach (var region in regions)
             {
                 bool hasBall = false;
                 foreach (var c in region)
                     if (ballCells.Contains(c)) { hasBall = true; break; }
+
+                Debug.Log($"[FloodFillService] регион size={region.Count} hasBall={hasBall}");
 
                 if (!hasBall)
                 {
@@ -74,7 +76,7 @@ namespace HippoGame.Grid
                 var cell = queue.Dequeue();
                 region.Add(cell);
 
-                foreach (var dir in Neighbors)
+                foreach (var dir in Cardinals)
                 {
                     var n = cell + dir;
                     if (!grid.IsInBounds(n))                       continue;
