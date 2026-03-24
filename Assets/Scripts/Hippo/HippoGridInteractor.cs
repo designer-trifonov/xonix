@@ -23,7 +23,7 @@ namespace HippoGame.Hippo
         private Vector2Int _segmentStartCell;
         private bool       _isDrawing;
         private bool       _hitInProgress;
-        private Vector2    _currentDir;
+        private Vector2Int _currentDir;
 
         public bool IsVulnerable => _isDrawing && !_hitInProgress;
         public bool IsDrawing    => _isDrawing;
@@ -43,6 +43,8 @@ namespace HippoGame.Hippo
             _hippoTransform = hippoTransform;
 
             movement.OnDirectionChanged += OnMovementDirectionChanged;
+            if (movement is HippoGame.Movement.CellMovement cm)
+                cm.OnCellChanged += OnCellChanged;
             GameLogger.Log("[HippoGridInteractor] Inject — все зависимости получены");
         }
 
@@ -56,10 +58,11 @@ namespace HippoGame.Hippo
         }
 
         // ── Событие смены направления ───────────────────────────────────────────────
-        private void OnMovementDirectionChanged(Vector2 newDir)
+        private void OnMovementDirectionChanged(Vector2Int newDir)
         {
             _currentDir       = newDir;
             _segmentStartCell = _grid.WorldToCell(_hippoTransform.position);
+            GameLogger.Log($"[HippoGridInteractor] Направление → ({newDir.x},{newDir.y}) segStart={_segmentStartCell}");
         }
 
         // ── Атомарная запись сегмента в grid ────────────────────────────────────────
@@ -105,20 +108,12 @@ namespace HippoGame.Hippo
             }
         }
 
-        // ── Update: детекция старта и закрытия зоны ─────────────────────────────────
-        private void Update()
+        // ── Событие от CellMovement: гиппо шагнул в новую клетку ───────────────────
+        private void OnCellChanged(Vector2Int prevCell, Vector2Int newCell)
         {
-            if (_grid == null || _hippoTransform == null) return;
-
-            Vector2Int cell = _grid.WorldToCell(_hippoTransform.position);
-            if (cell == _lastCell) return;
-
-            Vector2Int prevCell = _lastCell;
-            _lastCell = cell;
-
-            if (!_grid.IsInBounds(cell)) return;
-
-            HandleCellChange(cell, prevCell);
+            _lastCell = newCell;
+            if (!_grid.IsInBounds(newCell)) return;
+            HandleCellChange(newCell, prevCell);
         }
 
         private void HandleCellChange(Vector2Int cell, Vector2Int prevCell)
@@ -190,6 +185,10 @@ namespace HippoGame.Hippo
                         _trail.AddPoint(_segmentStartCell);
                         _grid.SetCell(_segmentStartCell.x, _segmentStartCell.y, CellState.Trail);
                     }
+
+                    // Сразу красим первую клетку — иначе будет пропуск
+                    _trail.AddPoint(cell);
+                    _grid.SetCell(cell.x, cell.y, CellState.Trail);
 
                     GameLogger.Log($"[HippoGridInteractor] НАЧАЛО РИСОВАНИЯ segStart={_segmentStartCell}");
                 }

@@ -7,8 +7,8 @@ namespace HippoGame.Interfaces
     {
         float Speed   { get; set; }
         bool  Stopped { get; }
-        event Action<Vector2> OnDirectionChanged;
-        void Tick(Transform transform, ref Vector2 currentDir, Vector2 inputDir, UnityEngine.Rect bounds, ICollisionService collision);
+        event Action<Vector2Int> OnDirectionChanged;
+        void Tick(Transform transform, ref Vector2Int currentDir, Vector2Int inputDir, Rect bounds, ICollisionService collision);
         void Stop();
         void Resume();
     }

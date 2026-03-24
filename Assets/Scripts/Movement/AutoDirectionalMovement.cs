@@ -4,15 +4,12 @@ using HippoGame.Interfaces;
 
 namespace HippoGame.Movement
 {
-    /// Двигает объект по одной оси согласно вводу.
-    /// Новое нажатие снимает стоп и меняет направление.
     public class AutoDirectionalMovement : IMovementBehaviour
     {
         public float Speed   { get; set; } = 5f;
         public bool  Stopped { get; private set; }
 
-        /// Срабатывает когда игрок нажимает новую клавишу направления.
-        public event Action<Vector2> OnDirectionChanged;
+        public event Action<Vector2Int> OnDirectionChanged;
 
         public void Stop()
         {
@@ -26,12 +23,16 @@ namespace HippoGame.Movement
             Debug.Log("[AutoDirectionalMovement] Resume");
         }
 
-        public void Tick(Transform target, ref Vector2 currentDirection, Vector2 inputDirection,
+        public void Tick(Transform target, ref Vector2Int currentDirection, Vector2Int inputDirection,
             Rect bounds, ICollisionService collision)
         {
-            if (inputDirection != Vector2.zero)
+            if (inputDirection != Vector2Int.zero)
             {
-                if (inputDirection != currentDirection)
+                if (DirectionGuard.IsReverse(currentDirection, inputDirection))
+                {
+                    // блок обратного
+                }
+                else if (inputDirection != currentDirection)
                 {
                     currentDirection = inputDirection;
                     Stopped = false;
@@ -39,14 +40,15 @@ namespace HippoGame.Movement
                 }
                 else if (Stopped)
                 {
-                    Stopped = false; // то же направление — просто возобновляем без события
+                    Stopped = false;
                 }
             }
 
-            if (currentDirection == Vector2.zero || Stopped)
+            if (currentDirection == Vector2Int.zero || Stopped)
                 return;
 
-            Vector3 next = target.position + (Vector3)(currentDirection.normalized * Speed * Time.deltaTime);
+            Vector2 dir = ((Vector2)currentDirection).normalized;
+            Vector3 next = target.position + (Vector3)(dir * Speed * Time.deltaTime);
             next.x = Mathf.Clamp(next.x, bounds.xMin, bounds.xMax);
             next.y = Mathf.Clamp(next.y, bounds.yMin, bounds.yMax);
 

@@ -4,30 +4,52 @@ using HippoGame.Interfaces;
 
 namespace HippoGame.Input
 {
-    /// Читает WASD и стрелки, возвращает направление движения.
+    /// Commit-on-release: направление фиксируется в момент первого отпускания клавиши.
+    /// Chord накапливается пока жмёшь — фиксируется когда отпустил.
     public class KeyboardInputProvider : IInputProvider
     {
-        public Vector2 GetDirection()
+        private Vector2Int _chord;   // максимум зажатых клавиш за этот жест
+        private bool       _active;  // идёт ли жест
+
+        public Vector2Int GetDirection()
         {
             var kb = Keyboard.current;
-            if (kb == null) return Vector2.zero;
+            if (kb == null) return Vector2Int.zero;
 
-            // Срабатываем только когда нажата новая клавиша
-            bool anyNew = kb.upArrowKey.wasPressedThisFrame    || kb.wKey.wasPressedThisFrame
-                       || kb.downArrowKey.wasPressedThisFrame  || kb.sKey.wasPressedThisFrame
-                       || kb.leftArrowKey.wasPressedThisFrame  || kb.aKey.wasPressedThisFrame
-                       || kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame;
+            bool up    = kb.upArrowKey.isPressed    || kb.wKey.isPressed;
+            bool down  = kb.downArrowKey.isPressed  || kb.sKey.isPressed;
+            bool left  = kb.leftArrowKey.isPressed  || kb.aKey.isPressed;
+            bool right = kb.rightArrowKey.isPressed || kb.dKey.isPressed;
 
-            if (!anyNew) return Vector2.zero;
+            bool anyDown     = kb.upArrowKey.wasPressedThisFrame    || kb.wKey.wasPressedThisFrame
+                            || kb.downArrowKey.wasPressedThisFrame  || kb.sKey.wasPressedThisFrame
+                            || kb.leftArrowKey.wasPressedThisFrame  || kb.aKey.wasPressedThisFrame
+                            || kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame;
 
-            // Читаем все зажатые клавиши — вектор собирается автоматически
-            float x = ((kb.rightArrowKey.isPressed || kb.dKey.isPressed) ? 1f : 0f)
-                    - ((kb.leftArrowKey.isPressed  || kb.aKey.isPressed) ? 1f : 0f);
-            float y = ((kb.upArrowKey.isPressed    || kb.wKey.isPressed) ? 1f : 0f)
-                    - ((kb.downArrowKey.isPressed  || kb.sKey.isPressed) ? 1f : 0f);
+            bool anyReleased = kb.upArrowKey.wasReleasedThisFrame    || kb.wKey.wasReleasedThisFrame
+                            || kb.downArrowKey.wasReleasedThisFrame  || kb.sKey.wasReleasedThisFrame
+                            || kb.leftArrowKey.wasReleasedThisFrame  || kb.aKey.wasReleasedThisFrame
+                            || kb.rightArrowKey.wasReleasedThisFrame || kb.dKey.wasReleasedThisFrame;
 
-            if (x == 0f && y == 0f) return Vector2.zero;
-            return new Vector2(x, y); // чистые компоненты: -1, 0, 1
+            // Обновляем chord пока жест активен
+            if (anyDown)
+            {
+                _active = true;
+                int x = (right ? 1 : 0) - (left ? 1 : 0);
+                int y = (up    ? 1 : 0) - (down ? 1 : 0);
+                _chord = new Vector2Int(x, y);
+            }
+
+            // Commit на первом отпускании
+            if (anyReleased && _active && _chord != Vector2Int.zero)
+            {
+                var dir = _chord;
+                _chord  = Vector2Int.zero;
+                _active = false;
+                return dir;
+            }
+
+            return Vector2Int.zero;
         }
     }
 }
