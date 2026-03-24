@@ -23,7 +23,12 @@ namespace HippoGame.Movement
         public event Action<Vector2Int>             OnDirectionChanged;
         public event Action<Vector2Int, Vector2Int> OnCellChanged;
 
-        public CellMovement(IGridService grid) => _grid = grid;
+        public CellMovement(IGridService grid)
+        {
+            _grid = grid;
+            // Дефолтная ячейка — верхний край по центру, а не (0,0)
+            _cell = new Vector2Int(grid.Columns / 2, grid.Rows - 1);
+        }
 
         public void QueueDirection(Vector2Int dir) => _pending = dir;
 
@@ -34,11 +39,20 @@ namespace HippoGame.Movement
             _timer   = 0f;
         }
 
-        public void Resume()
+        public void Resume(Transform target = null)
         {
-            Stopped      = false;
-            _initialized = false;
-            _pending     = Vector2Int.zero;
+            Stopped  = false;
+            _pending = Vector2Int.zero;
+
+            if (target != null)
+            {
+                _cell        = _grid.WorldToCell(target.position);
+                _initialized = true;
+            }
+            else
+            {
+                _initialized = false;
+            }
         }
 
         /// Применяет pending если есть. Возвращает true если направление сменилось.
@@ -87,16 +101,16 @@ namespace HippoGame.Movement
                 ApplyPending();
 
                 // Шаг
-                Vector2Int next      = _cell + _direction;
-                Vector2    nextWorld = _grid.CellToWorld(next);
+                Vector2Int next = _cell + _direction;
 
-                if (nextWorld.x < bounds.xMin || nextWorld.x > bounds.xMax ||
-                    nextWorld.y < bounds.yMin || nextWorld.y > bounds.yMax)
+                if (!_grid.IsInBounds(next))
                 {
                     Stopped = true;
                     _timer  = 0f;
                     break;
                 }
+
+                Vector2 nextWorld = _grid.CellToWorld(next);
 
                 var prevCell = _cell;
                 _cell           = next;

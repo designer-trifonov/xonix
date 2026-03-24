@@ -307,7 +307,6 @@ namespace HippoGame.Editor
             so.FindProperty("_hippoController").objectReferenceValue     = hippo;
             so.FindProperty("_gameGrid").objectReferenceValue            = grid;
             so.FindProperty("_hippoGridInteractor").objectReferenceValue = interactor;
-            so.FindProperty("_movementTrail").objectReferenceValue       = trail;
             so.FindProperty("_ballSpawner").objectReferenceValue         = spawner;
             so.FindProperty("_livesUI").objectReferenceValue             = ui.Lives;
             so.FindProperty("_scoreUI").objectReferenceValue             = ui.Score;

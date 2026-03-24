@@ -17,7 +17,7 @@ namespace HippoGame.Movement
             Debug.Log("[AutoDirectionalMovement] Stop");
         }
 
-        public void Resume()
+        public void Resume(Transform target = null)
         {
             Stopped = false;
             Debug.Log("[AutoDirectionalMovement] Resume");

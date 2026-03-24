@@ -37,6 +37,7 @@ namespace HippoGame.Core
         private void Awake()
         {
             Debug.Log("[Bootstrap] Awake — сборка зависимостей");
+            _gameGrid.Initialize();
             var container = BuildContainer();
             Inject(container);
             InitializeAll(container);

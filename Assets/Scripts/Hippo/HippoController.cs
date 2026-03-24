@@ -28,12 +28,10 @@ namespace HippoGame.Hippo
             if (sr == null) sr = gameObject.AddComponent<SpriteRenderer>();
 
             if (sr.sprite == null)
-            {
-                Debug.LogError("[HippoController] Sprite не назначен!", this);
-                return;
-            }
+                Debug.LogWarning("[HippoController] Sprite не назначен!", this);
+            else
+                sr.sortingOrder = 10;
 
-            sr.sortingOrder = 10;
             transform.localScale = Vector3.one;
             PlaceAtSpawn();
         }
@@ -77,7 +75,7 @@ namespace HippoGame.Hippo
 
         public void ResetMovement()
         {
-            _movement.Resume();
+            _movement.Resume(transform);
         }
 
         private void PlaceAtSpawn()

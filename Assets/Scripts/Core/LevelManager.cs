@@ -114,7 +114,12 @@ namespace HippoGame.Core
             _lastFillPct = 0f;
             _grid.ResetCells();
 
-            Vector3 spawnPos = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
+            // Snap к ячейке сетки — как PlaceAtSpawn
+            Vector3    raw     = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
+            Vector2Int cell    = _grid.WorldToCell(raw);
+            Vector2    snapped = _grid.CellToWorld(cell);
+            Vector3    spawnPos = new Vector3(snapped.x, snapped.y, -1f);
+
             _hippo.SetPosition(spawnPos);
             _hippo.ResetMovement();
             _interactor.ResetState(spawnPos);

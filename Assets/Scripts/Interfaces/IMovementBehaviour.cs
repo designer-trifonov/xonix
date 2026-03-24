@@ -10,6 +10,6 @@ namespace HippoGame.Interfaces
         event Action<Vector2Int> OnDirectionChanged;
         void Tick(Transform transform, ref Vector2Int currentDir, Vector2Int inputDir, Rect bounds, ICollisionService collision);
         void Stop();
-        void Resume();
+        void Resume(Transform target = null);
     }
 }

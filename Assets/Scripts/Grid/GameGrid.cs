@@ -23,10 +23,11 @@ namespace HippoGame.Grid
         public Rect  Bounds   => _bounds;
         public float CellSize => _pixelSize;
 
-        private void Awake()
+        public void Initialize()
         {
             BuildGrid();
             CreateQuad();
+            ResetCells();
         }
 
         private void LateUpdate()

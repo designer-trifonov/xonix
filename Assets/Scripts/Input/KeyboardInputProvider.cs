@@ -4,12 +4,16 @@ using HippoGame.Interfaces;
 
 namespace HippoGame.Input
 {
-    /// Commit-on-release: направление фиксируется в момент первого отпускания клавиши.
-    /// Chord накапливается пока жмёшь — фиксируется когда отпустил.
+    /// Immediate с grace-буфером для диагоналей.
+    /// При нажатии ждёт ~2 кадра, чтобы поймать вторую клавишу.
     public class KeyboardInputProvider : IInputProvider
     {
-        private Vector2Int _chord;   // максимум зажатых клавиш за этот жест
-        private bool       _active;  // идёт ли жест
+        private const float GraceTime = 0.04f; // ~2 кадра при 60fps
+
+        private Vector2Int _lastCommitted;
+        private Vector2Int _candidate;
+        private float      _candidateAge;
+        private bool       _hasPending;
 
         public Vector2Int GetDirection()
         {
@@ -21,35 +25,31 @@ namespace HippoGame.Input
             bool left  = kb.leftArrowKey.isPressed  || kb.aKey.isPressed;
             bool right = kb.rightArrowKey.isPressed || kb.dKey.isPressed;
 
-            bool anyDown     = kb.upArrowKey.wasPressedThisFrame    || kb.wKey.wasPressedThisFrame
-                            || kb.downArrowKey.wasPressedThisFrame  || kb.sKey.wasPressedThisFrame
-                            || kb.leftArrowKey.wasPressedThisFrame  || kb.aKey.wasPressedThisFrame
-                            || kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame;
+            int x = (right ? 1 : 0) - (left ? 1 : 0);
+            int y = (up    ? 1 : 0) - (down ? 1 : 0);
+            var current = new Vector2Int(x, y);
 
-            bool anyReleased = kb.upArrowKey.wasReleasedThisFrame    || kb.wKey.wasReleasedThisFrame
-                            || kb.downArrowKey.wasReleasedThisFrame  || kb.sKey.wasReleasedThisFrame
-                            || kb.leftArrowKey.wasReleasedThisFrame  || kb.aKey.wasReleasedThisFrame
-                            || kb.rightArrowKey.wasReleasedThisFrame || kb.dKey.wasReleasedThisFrame;
-
-            // Обновляем chord пока жест активен
-            if (anyDown)
+            // Направление изменилось
+            if (current != _candidate)
             {
-                _active = true;
-                int x = (right ? 1 : 0) - (left ? 1 : 0);
-                int y = (up    ? 1 : 0) - (down ? 1 : 0);
-                _chord = new Vector2Int(x, y);
+                _candidate    = current;
+                _candidateAge = 0f;
+                _hasPending   = current != Vector2Int.zero && current != _lastCommitted;
             }
 
-            // Commit на первом отпускании
-            if (anyReleased && _active && _chord != Vector2Int.zero)
-            {
-                var dir = _chord;
-                _chord  = Vector2Int.zero;
-                _active = false;
-                return dir;
-            }
+            if (!_hasPending) return Vector2Int.zero;
 
-            return Vector2Int.zero;
+            _candidateAge += Time.deltaTime;
+
+            // Кардинальное → ждём grace period (вдруг дожмут вторую клавишу)
+            bool isSingleAxis = _candidate.x == 0 || _candidate.y == 0;
+            if (isSingleAxis && _candidateAge < GraceTime)
+                return Vector2Int.zero;
+
+            // Диагональ или grace истёк → коммитим сразу
+            _lastCommitted = _candidate;
+            _hasPending    = false;
+            return _candidate;
         }
     }
 }
