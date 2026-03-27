@@ -9,6 +9,7 @@ using HippoGame.Ball;
 using HippoGame.UI;
 using HippoGame.FX;
 using HippoGame.Trail;
+using HippoGame.Ads;
 
 namespace HippoGame.Core
 {
@@ -37,6 +38,11 @@ namespace HippoGame.Core
         private void Awake()
         {
             Debug.Log("[Bootstrap] Awake — сборка зависимостей");
+
+            // Yandex Ads — создаём если ещё нет на сцене
+            if (FindObjectOfType<YandexAdsService>() == null)
+                new GameObject("YandexAdsService").AddComponent<YandexAdsService>();
+
             _gameGrid.Initialize();
             var container = BuildContainer();
             Inject(container);

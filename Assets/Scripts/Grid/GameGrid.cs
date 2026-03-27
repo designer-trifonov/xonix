@@ -106,7 +106,7 @@ namespace HippoGame.Grid
             for (int y = 0; y < _rows; y++)
             {
                 bool edge = x == 0 || x == _columns - 1 || y == 0 || y == _rows - 1;
-                SetCell(x, y, edge ? CellState.Border : CellState.Empty);
+                SetCell(x, y, edge ? CellState.Filled : CellState.Empty);
             }
         }
 

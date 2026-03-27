@@ -38,6 +38,7 @@ namespace HippoGame.Ball
             {
                 GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 go.name = $"Ball_{i}";
+                go.tag  = "Ball";
                 go.transform.localScale = Vector3.one * 0.25f;
                 Destroy(go.GetComponent<Collider>());
                 go.GetComponent<Renderer>().material.color = new Color(1f, 0.3f, 0.1f);

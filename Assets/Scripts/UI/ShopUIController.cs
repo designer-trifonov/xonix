@@ -18,11 +18,6 @@ namespace HippoGame.UI
         [SerializeField] private Button _removeBallButton;
         [SerializeField] private Button _slowBallsButton;
 
-        [Header("Ad Labels")]
-        [SerializeField] private TMP_Text _addLifeLabel;
-        [SerializeField] private TMP_Text _removeBallLabel;
-        [SerializeField] private TMP_Text _slowBallsLabel;
-
         private IGameState       _gameState;
         private IBallSpawner     _ballSpawner;
         private YandexAdsService _ads;
@@ -40,9 +35,9 @@ namespace HippoGame.UI
         {
             _shopPanel.SetActive(false);
             _openShopButton.onClick.AddListener(ToggleShop);
-            _addLifeButton.onClick.AddListener(()    => WatchAd(ApplyAddLife,    _addLifeLabel,   "+1 жизнь"));
-            _removeBallButton.onClick.AddListener(() => WatchAd(ApplyRemoveBall, _removeBallLabel, "-1 шар"));
-            _slowBallsButton.onClick.AddListener(()  => WatchAd(ApplySlowBalls,  _slowBallsLabel,  "-20% скорость"));
+            _addLifeButton.onClick.AddListener(()    => WatchAd(ApplyAddLife,    "+1 жизнь"));
+            _removeBallButton.onClick.AddListener(() => WatchAd(ApplyRemoveBall, "-1 шар"));
+            _slowBallsButton.onClick.AddListener(()  => WatchAd(ApplySlowBalls,  "-20% скорость"));
         }
 
         private void ToggleShop()
@@ -50,19 +45,38 @@ namespace HippoGame.UI
             bool next = !_shopPanel.activeSelf;
             _shopPanel.SetActive(next);
             Time.timeScale = next ? 0f : 1f;
+            SetBallsVisible(!next);
         }
 
-        private void WatchAd(System.Action onComplete, TMP_Text label, string boostName)
+        private void SetBallsVisible(bool visible)
+        {
+            foreach (var go in GameObject.FindGameObjectsWithTag("Ball"))
+            {
+                var r = go.GetComponent<Renderer>();
+                if (r != null) r.enabled = visible;
+            }
+        }
+
+        private void WatchAd(System.Action onComplete, string boostName)
         {
             if (_adInProgress) return;
+
+            // Нет рекламного сервиса — даём буст бесплатно (dev mode)
+            if (_ads == null)
+            {
+                onComplete?.Invoke();
+                Debug.Log($"[ShopUIController] DEV: буст бесплатно — {boostName}");
+                _shopPanel.SetActive(false);
+                Time.timeScale = 1f;
+                return;
+            }
+
             _adInProgress = true;
             SetAllButtonsInteractable(false);
-            if (label != null) label.text = "Загрузка...";
 
             _ads.ShowRewarded(
                 onSuccess: () =>
                 {
-                    if (label != null) label.text = boostName;
                     onComplete?.Invoke();
                     Debug.Log($"[ShopUIController] Буст применён: {boostName}");
                     SetAllButtonsInteractable(true);
@@ -72,7 +86,6 @@ namespace HippoGame.UI
                 },
                 onFailed: () =>
                 {
-                    if (label != null) label.text = boostName;
                     Debug.Log("[ShopUIController] Реклама не досмотрена — буст не выдан");
                     SetAllButtonsInteractable(true);
                     _adInProgress = false;

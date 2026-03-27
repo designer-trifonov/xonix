@@ -15,7 +15,7 @@ MonoBehaviour:
   StartLives: 3
   BaseFillPercent: 50
   FillPercentPerLevel: 5
-  BaseHippoSpeed: 2.5
+  BaseHippoSpeed: 1.5
   HippoSpeedPerLevel: 0.5
   BaseBallSpeed: 2
   BallSpeedPerLevel: 0.5
