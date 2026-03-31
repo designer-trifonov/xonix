@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.UI;
+using HippoGame.Interfaces;
 
 namespace HippoGame.Core
 {
@@ -11,6 +12,9 @@ namespace HippoGame.Core
         [SerializeField] private GameObject[]         _hideUntilStart;
 
         private readonly List<Action> _initCallbacks = new();
+        private IAdService _adService;
+
+        public void Inject(IAdService adService) => _adService = adService;
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
 
@@ -31,6 +35,7 @@ namespace HippoGame.Core
 
         private void OnGameStart()
         {
+            _adService?.ShowInterstitial();
             SetVisible(true);
             foreach (var cb in _initCallbacks)
                 cb?.Invoke();

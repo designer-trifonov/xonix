@@ -29,37 +29,47 @@ namespace HippoGame.Ads
         private void OnEnable()
         {
 #if YandexGamesPlatform_yg
-            YG2.onGetSDKData       += OnSDKReady;
-            YG2.onOpenRewardedAdv  += FireOpen;
-            YG2.onCloseRewardedAdv += FireClose;
-            YG2.onErrorRewardedAdv += FireError;
+            YG2.onOpenInterAdv         += OnInterOpen;
+            YG2.onCloseInterAdv        += OnInterClose;
+            YG2.onCloseInterAdvWasShow += OnInterWasShow;
+            YG2.onErrorInterAdv        += OnInterError;
+            YG2.onOpenRewardedAdv      += OnRewardOpen;
+            YG2.onCloseRewardedAdv     += OnRewardClose;
+            YG2.onErrorRewardedAdv     += OnRewardError;
 #endif
         }
 
         private void OnDisable()
         {
 #if YandexGamesPlatform_yg
-            YG2.onGetSDKData       -= OnSDKReady;
-            YG2.onOpenRewardedAdv  -= FireOpen;
-            YG2.onCloseRewardedAdv -= FireClose;
-            YG2.onErrorRewardedAdv -= FireError;
+            YG2.onOpenInterAdv         -= OnInterOpen;
+            YG2.onCloseInterAdv        -= OnInterClose;
+            YG2.onCloseInterAdvWasShow -= OnInterWasShow;
+            YG2.onErrorInterAdv        -= OnInterError;
+            YG2.onOpenRewardedAdv      -= OnRewardOpen;
+            YG2.onCloseRewardedAdv     -= OnRewardClose;
+            YG2.onErrorRewardedAdv     -= OnRewardError;
 #endif
         }
 
-        private void FireOpen()  => OnRewardedOpen?.Invoke();
-        private void FireClose() => OnRewardedClose?.Invoke();
-        private void FireError() => OnRewardedError?.Invoke();
-
 #if YandexGamesPlatform_yg
-        private void OnSDKReady() => YG2.InterstitialAdvShow();
+        private void OnInterOpen()              { Debug.Log("[AdController] Interstitial ОТКРЫТА"); }
+        private void OnInterClose()             { Debug.Log("[AdController] Interstitial ЗАКРЫТА"); }
+        private void OnInterWasShow(bool shown) { Debug.Log($"[AdController] Interstitial показана: {shown}"); }
+        private void OnInterError()             { Debug.Log("[AdController] Interstitial ОШИБКА"); }
+
+        private void OnRewardOpen()  { Debug.Log("[AdController] Rewarded ОТКРЫТА");  OnRewardedOpen?.Invoke(); }
+        private void OnRewardClose() { Debug.Log("[AdController] Rewarded ЗАКРЫТА"); OnRewardedClose?.Invoke(); }
+        private void OnRewardError() { Debug.Log("[AdController] Rewarded ОШИБКА");  OnRewardedError?.Invoke(); }
 #endif
 
         public void ShowInterstitial()
         {
 #if YandexGamesPlatform_yg
-            YG2.InterstitialAdvShow();
+            Debug.Log($"[AdController] ShowInterstitial → таймер готов: {YG2.isTimerAdvCompleted} осталось: {YG2.timerInterAdv:F1}s");
+            YG2.optionalPlatform.FirstInterAdvShow();
 #else
-            Debug.Log("[AdController] ShowInterstitial — YG не установлен");
+            Debug.Log("[AdController] ShowInterstitial (stub — YG не установлен)");
 #endif
         }
 
@@ -68,7 +78,7 @@ namespace HippoGame.Ads
 #if YandexGamesPlatform_yg
             YG2.RewardedAdvShow(id, onReward);
 #else
-            Debug.Log($"[AdController] ShowRewarded '{id}' — YG не установлен, награда выдана");
+            Debug.Log($"[AdController] ShowRewarded '{id}' (stub) — награда выдана");
             onReward?.Invoke();
 #endif
         }

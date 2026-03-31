@@ -131,6 +131,7 @@ namespace HippoGame.Core
                 _gameOverUI.OnWatchAd   += levelManager.ContinueAfterAd;
             }
 
+            _gameStartController.Inject(container.Resolve<IAdService>());
             _gameStartController.RegisterInit(_gameGrid.Initialize);
             _gameStartController.RegisterInit(container.Resolve<HippoController>().Initialize);
             _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);
