@@ -7,7 +7,7 @@ namespace HippoGame.Zone
     [ExecuteAlways]
     public class GameZone : MonoBehaviour, IBoundaryService
     {
-        [SerializeField] private Vector2 _zoneSize = new Vector2(11f, 7.6f);
+        [SerializeField] private Vector2 _zoneSize = Vector2.zero;
 
         public Rect GetBounds()
         {

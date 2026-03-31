@@ -1,6 +1,0 @@
-﻿<Solution>
-  <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="AppMetricaAdRevenueAdapter.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="AppMetricaAdRevenueAdapter.Editor.csproj" />
-</Solution>

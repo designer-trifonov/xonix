@@ -1,5 +1,0 @@
-
-typedef const void *YMAUnityAudioSessionManagerClientRef;
-
-typedef void (*YMAUnityAudioSessionManagerWillPlayAudioCallback)(YMAUnityAudioSessionManagerClientRef *audioSessionManagerClient);
-typedef void (*YMAUnityAudioSessionManagerDidStopPlayingAudioCallback)(YMAUnityAudioSessionManagerClientRef *audioSessionManagerClient);

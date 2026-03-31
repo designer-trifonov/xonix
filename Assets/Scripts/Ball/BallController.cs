@@ -7,11 +7,20 @@ namespace HippoGame.Ball
     /// Движение шара, отскок от стен и залитых пикселей, попадание в гиппо и трейл.
     public class BallController : MonoBehaviour, IBallController
     {
-        public bool    IsAlive  => this != null;
+        public bool    IsAlive  => _active;
         public Vector3 Position => transform.position;
-        public void    Kill()   => Destroy(gameObject);
-        public void    SetSpeed(float speed) => _speed = speed;
 
+        public void Kill()
+        {
+            _active = false;
+            _renderer.enabled = false;
+        }
+
+        public void SetSpeed(float speed)    => _speed = speed;
+        public void SetVisible(bool visible) => _renderer.enabled = visible;
+
+        private Renderer          _renderer;
+        private bool              _active;
         private Vector2           _direction;
         private float             _speed;
         private Rect              _bounds;
@@ -25,6 +34,9 @@ namespace HippoGame.Ball
         public void Init(Vector2 direction, float speed, Rect bounds,
             IGridService grid, Transform hippo, IBallInteractable interactable)
         {
+            _renderer     = GetComponent<Renderer>();
+            _active       = true;
+            _renderer.enabled = true;
             _direction    = direction.normalized;
             _speed        = speed;
             _bounds       = bounds;
@@ -36,12 +48,11 @@ namespace HippoGame.Ball
 
         private void Update()
         {
-            if (_interactable == null) return;
+            if (!_active || _interactable == null) return;
 
             Vector2 pos  = transform.position;
             Vector2 next = pos + _direction * _speed * Time.deltaTime;
 
-            // Отскок от границ поля
             if (next.x <= _bounds.xMin || next.x >= _bounds.xMax)
             {
                 _direction.x = -_direction.x;
@@ -53,7 +64,6 @@ namespace HippoGame.Ball
                 next.y = Mathf.Clamp(next.y, _bounds.yMin, _bounds.yMax);
             }
 
-            // Отскок от залитых пикселей
             BounceOffFilled(pos, ref next);
 
             transform.position = new Vector3(next.x, next.y, -0.5f);
@@ -80,7 +90,6 @@ namespace HippoGame.Ball
             if (!_grid.IsInBounds(toCell)) return;
             if (_grid.GetCell(toCell.x, toCell.y) != CellState.Filled) return;
 
-            // Проверяем по каждой оси отдельно
             Vector2Int xCell = _grid.WorldToCell(new Vector2(to.x, from.y));
             Vector2Int yCell = _grid.WorldToCell(new Vector2(from.x, to.y));
 

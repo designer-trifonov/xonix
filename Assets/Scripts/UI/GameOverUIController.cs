@@ -2,7 +2,6 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using HippoGame.Ads;
 
 namespace HippoGame.UI
 {
@@ -16,15 +15,14 @@ namespace HippoGame.UI
         public event Action OnWatchAd;
         public event Action OnRestart;
 
-        private YandexAdsService _ads;
 
         private void Awake()
         {
             _panel.SetActive(false);
             _watchAdButton.onClick.AddListener(OnWatchAdClicked);
             _restartButton.onClick.AddListener(OnRestartClicked);
-            _ads = FindObjectOfType<YandexAdsService>();
         }
+
 
         public void Show()
         {
@@ -40,33 +38,20 @@ namespace HippoGame.UI
 
         private void OnWatchAdClicked()
         {
-            _watchAdButton.interactable = false;
-            _restartButton.interactable = false;
-            if (_adButtonText != null) _adButtonText.text = "Загрузка...";
-
-            _ads.ShowRewarded(
-                onSuccess: () =>
-                {
-                    if (_adButtonText != null) _adButtonText.text = "Продолжить за рекламу";
-                    _watchAdButton.interactable = true;
-                    _restartButton.interactable = true;
-                    Hide();
-                    OnWatchAd?.Invoke();
-                },
-                onFailed: () =>
-                {
-                    if (_adButtonText != null) _adButtonText.text = "Продолжить за рекламу";
-                    _watchAdButton.interactable = true;
-                    _restartButton.interactable = true;
-                    Debug.Log("[GameOverUIController] Реклама не досмотрена");
-                }
-            );
+            Hide();
+            OnWatchAd?.Invoke();
         }
 
         private void OnRestartClicked()
         {
             Hide();
             OnRestart?.Invoke();
+        }
+
+        private void SetButtonsInteractable(bool value)
+        {
+            _watchAdButton.interactable = value;
+            _restartButton.interactable = value;
         }
     }
 }

@@ -48,13 +48,16 @@ namespace HippoGame.Movement
 
         public void Resume(Transform target = null)
         {
-            Stopped      = false;
-            _pending     = Vector2Int.zero;
+            Stopped        = false;
+            _pending       = Vector2Int.zero;
+            _direction     = Vector2Int.zero;
             _interpolating = false;
 
             if (target != null)
             {
                 _cell        = _grid.WorldToCell(target.position);
+                _visualFrom  = target.position;
+                _visualTo    = target.position;
                 _initialized = true;
             }
             else

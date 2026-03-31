@@ -8,5 +8,6 @@ namespace HippoGame.Interfaces
         Vector3 Position { get; }
         void    Kill();
         void    SetSpeed(float speed);
+        void    SetVisible(bool visible);
     }
 }

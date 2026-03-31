@@ -13,19 +13,20 @@ using HippoGame.Ads;
 
 namespace HippoGame.Core
 {
-    /// Единая точка сборки: создаёт все объекты и соединяет зависимости.
     public class Bootstrap : MonoBehaviour
     {
         [Header("Config")]
-        [SerializeField] private LevelConfig               _levelConfig;
+        [SerializeField] private LevelConfig _levelConfig;
 
         [Header("Systems")]
-        [SerializeField] private GameZone                  _gameZone;
-        [SerializeField] private HippoController           _hippoController;
-        [SerializeField] private GameGrid                  _gameGrid;
-        [SerializeField] private HippoGridInteractor       _hippoGridInteractor;
-        [SerializeField] private ParticleEffectsService    _particleEffects;
-        [SerializeField] private BallSpawner               _ballSpawner;
+        [SerializeField] private GameZone              _gameZone;
+        [SerializeField] private HippoController       _hippoController;
+        [SerializeField] private GameGrid              _gameGrid;
+        [SerializeField] private HippoGridInteractor   _hippoGridInteractor;
+        [SerializeField] private ParticleEffectsService _particleEffects;
+        [SerializeField] private BallSpawner           _ballSpawner;
+        [SerializeField] private AdController          _adController;
+        [SerializeField] private GameStartController   _gameStartController;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -33,21 +34,12 @@ namespace HippoGame.Core
         [SerializeField] private LevelUIController       _levelUI;
         [SerializeField] private FillPercentUIController _percentUI;
         [SerializeField] private GameOverUIController    _gameOverUI;
-        [SerializeField] private ShopUIController       _shopUI;
+        [SerializeField] private ShopUIController        _shopUI;
 
         private void Awake()
         {
-            Debug.Log("[Bootstrap] Awake — сборка зависимостей");
-
-            // Yandex Ads — создаём если ещё нет на сцене
-            if (FindObjectOfType<YandexAdsService>() == null)
-                new GameObject("YandexAdsService").AddComponent<YandexAdsService>();
-
-            _gameGrid.Initialize();
             var container = BuildContainer();
             Inject(container);
-            InitializeAll(container);
-            Debug.Log("[Bootstrap] Готово — игра запущена");
         }
 
         private DiContainer BuildContainer()
@@ -57,6 +49,7 @@ namespace HippoGame.Core
             container.Register<GameState>(gameState);
             container.Register<IGameState>(gameState);
             container.Register<IBoundaryService>(_gameZone);
+            container.Register<IAdService>(_adController);
             container.Register<IInputProvider>(new KeyboardInputProvider());
             container.Register<HippoController>(_hippoController);
             container.Register<IGridService>(_gameGrid);
@@ -67,10 +60,7 @@ namespace HippoGame.Core
             container.Register<IFillService>(new FloodFillService());
             var grid = container.Resolve<IGridService>();
             container.Register<ICollisionService>(new DrawingAwareCollisionService(
-                _hippoGridInteractor,
-                grid,
-                new CellCollisionService(grid)
-            ));
+                _hippoGridInteractor, grid, new CellCollisionService(grid)));
             container.Register<IHippoController>(_hippoController);
             container.Register<IHippoGridInteractor>(_hippoGridInteractor);
             container.Register<ITrailService>(new TrailTracker());
@@ -80,15 +70,14 @@ namespace HippoGame.Core
                 container.Register<IParticleService>(_particleEffects);
             container.Register<HippoGridInteractor>(_hippoGridInteractor);
             container.Register<LevelManager>(new LevelManager());
-
-            Debug.Log("[Bootstrap] DiContainer собран");
             return container;
         }
 
         private void Inject(DiContainer container)
         {
-            var state = container.Resolve<GameState>();
-            var grid  = container.Resolve<IGridService>();
+            var state        = container.Resolve<GameState>();
+            var grid         = container.Resolve<IGridService>();
+            var levelManager = container.Resolve<LevelManager>();
 
             _hippoController.Inject(
                 container.Resolve<IInputProvider>(),
@@ -96,8 +85,7 @@ namespace HippoGame.Core
                 container.Resolve<IBoundaryService>(),
                 container.Resolve<ICollisionService>(),
                 container.Resolve<IGridService>(),
-                _hippoGridInteractor
-            );
+                _hippoGridInteractor);
 
             _hippoGridInteractor.Inject(
                 grid,
@@ -106,42 +94,32 @@ namespace HippoGame.Core
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
                 _particleEffects != null ? container.Resolve<IParticleService>() : null,
-                container.Resolve<IBallSpawner>()
-            );
+                container.Resolve<IBallSpawner>());
 
-            _hippoGridInteractor.OnHit += () =>
-            {
-                container.Resolve<IGameState>().LoseLife();
-                Debug.Log("[TRAIL CLEAR] причина: Bootstrap.OnHit → LoseLife");
-            };
+            _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
 
             if (_ballSpawner != null)
                 _ballSpawner.Inject(
                     grid,
                     container.Resolve<IBoundaryService>(),
                     _hippoController.transform,
-                    container.Resolve<IBallInteractable>()
-                );
+                    container.Resolve<IBallInteractable>());
 
-            container.Resolve<LevelManager>().Inject(
+            levelManager.Inject(
                 container.Resolve<IGameState>(),
                 grid,
                 container.Resolve<IBallSpawner>(),
                 container.Resolve<IHippoController>(),
                 container.Resolve<IHippoGridInteractor>(),
                 container.Resolve<IMovementBehaviour>(),
-                container.Resolve<IBoundaryService>()
-            );
+                container.Resolve<IBoundaryService>());
 
             if (_livesUI   != null) _livesUI.Inject(state);
             if (_scoreUI   != null) _scoreUI.Inject(state);
             if (_levelUI   != null) _levelUI.Inject(state);
             if (_percentUI != null) _percentUI.Inject(state, grid);
+            if (_shopUI    != null) _shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>());
 
-            if (_shopUI != null)
-                _shopUI.Inject(container.Resolve<IGameState>(), container.Resolve<IBallSpawner>());
-
-            var levelManager = container.Resolve<LevelManager>();
             if (_gameOverUI != null)
             {
                 levelManager.OnGameOver += _gameOverUI.Show;
@@ -149,27 +127,20 @@ namespace HippoGame.Core
                 _gameOverUI.OnWatchAd   += levelManager.ContinueAfterAd;
             }
 
-            Debug.Log("[Bootstrap] Inject завершён");
+            _gameStartController.RegisterInit(_gameGrid.Initialize);
+            _gameStartController.RegisterInit(container.Resolve<HippoController>().Initialize);
+            _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);
+            _gameStartController.RegisterInit(levelManager.Initialize);
+            if (_livesUI   != null) _gameStartController.RegisterInit(_livesUI.Initialize);
+            if (_scoreUI   != null) _gameStartController.RegisterInit(_scoreUI.Initialize);
+            if (_levelUI   != null) _gameStartController.RegisterInit(_levelUI.Initialize);
+            if (_percentUI != null) _gameStartController.RegisterInit(_percentUI.Initialize);
         }
 
         private void Update()
         {
             if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
                 Application.Quit();
-        }
-
-        private void InitializeAll(DiContainer container)
-        {
-            container.Resolve<HippoController>().Initialize();
-            container.Resolve<HippoGridInteractor>().Initialize();
-            container.Resolve<LevelManager>().Initialize();
-
-            if (_livesUI   != null) _livesUI.Initialize();
-            if (_scoreUI   != null) _scoreUI.Initialize();
-            if (_levelUI   != null) _levelUI.Initialize();
-            if (_percentUI != null) _percentUI.Initialize();
-
-            Debug.Log("[Bootstrap] InitializeAll завершён");
         }
     }
 }

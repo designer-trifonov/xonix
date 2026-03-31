@@ -5,10 +5,12 @@ using HippoGame.Grid;
 
 namespace HippoGame.Ball
 {
-    /// Создаёт и уничтожает шары по параметрам уровня.
-    /// LevelManager работает с ним только через IBallSpawner.
+    /// Создаёт и переиспользует шары через пул.
     public class BallSpawner : MonoBehaviour, IBallSpawner
     {
+        [SerializeField] private GameObject _ballPrefab;
+
+        private readonly List<BallController> _pool  = new();
         private readonly List<IBallController> _balls = new();
 
         private IGridService      _grid;
@@ -16,6 +18,7 @@ namespace HippoGame.Ball
         private Transform         _hippo;
         private IBallInteractable _interactable;
         private float             _currentBallSpeed;
+        private float             _originalBallSpeed;
 
         public void Inject(IGridService grid, IBoundaryService boundary,
             Transform hippo, IBallInteractable interactable)
@@ -31,34 +34,30 @@ namespace HippoGame.Ball
         {
             ClearBalls();
             _currentBallSpeed = speed;
+            _originalBallSpeed = speed;
             Rect bounds = _boundary.GetBounds();
             Debug.Log($"[BallSpawner] SpawnBalls count={count} speed={speed:F2}");
 
             for (int i = 0; i < count; i++)
             {
-                GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                go.name = $"Ball_{i}";
-                go.tag  = "Ball";
-                go.transform.localScale = Vector3.one * 0.25f;
-                Destroy(go.GetComponent<Collider>());
-                go.GetComponent<Renderer>().material.color = new Color(1f, 0.3f, 0.1f);
+                BallController ball = GetOrCreate(i);
 
                 Vector2 pos = RandomInteriorPos(bounds);
-                go.transform.position = new Vector3(pos.x, pos.y, -0.5f);
+                ball.transform.position = new Vector3(pos.x, pos.y, -0.5f);
 
                 float dx = Random.value > 0.5f ? 1f : -1f;
                 float dy = Random.value > 0.5f ? 1f : -1f;
-
-                BallController ball = go.AddComponent<BallController>();
                 ball.Init(new Vector2(dx, dy).normalized, speed, bounds, _grid, _hippo, _interactable);
+
+                ball.gameObject.SetActive(true);
                 _balls.Add(ball);
-                Debug.Log($"[BallSpawner] Ball_{i} создан в ({pos.x:F2},{pos.y:F2})");
+                Debug.Log($"[BallSpawner] Ball_{i} активирован в ({pos.x:F2},{pos.y:F2})");
             }
         }
 
         public int CheckBallsAfterFill()
         {
-            List<IBallController> caught = new();
+            var caught = new List<IBallController>();
 
             foreach (var ball in _balls)
             {
@@ -98,7 +97,7 @@ namespace HippoGame.Ball
                 }
                 _balls[i].Kill();
                 _balls.RemoveAt(i);
-                Debug.Log($"[BallSpawner] RemoveOneBall: удалён шар, осталось={_balls.Count}");
+                Debug.Log($"[BallSpawner] RemoveOneBall: шар возвращён в пул, осталось={_balls.Count}");
                 return true;
             }
             return false;
@@ -106,18 +105,61 @@ namespace HippoGame.Ball
 
         public void SlowBalls(float factor)
         {
-            _currentBallSpeed *= factor;
+            float minSpeed = _originalBallSpeed * 0.2f;
+            _currentBallSpeed = Mathf.Max(_currentBallSpeed * factor, minSpeed);
             foreach (var ball in _balls)
                 if (ball.IsAlive) ball.SetSpeed(_currentBallSpeed);
-            Debug.Log($"[BallSpawner] SlowBalls: фактор={factor:F2} → скорость={_currentBallSpeed:F2}");
+            Debug.Log($"[BallSpawner] SlowBalls: скорость={_currentBallSpeed:F2} (мин={minSpeed:F2})");
+        }
+
+        public void SetBallsVisible(bool visible)
+        {
+            foreach (var b in _balls)
+                if (b.IsAlive) b.SetVisible(visible);
         }
 
         public void ClearBalls()
         {
-            Debug.Log($"[BallSpawner] ClearBalls count={_balls.Count}");
+            Debug.Log($"[BallSpawner] ClearBalls: возвращаем {_balls.Count} шаров в пул");
             foreach (var b in _balls)
                 if (b.IsAlive) b.Kill();
             _balls.Clear();
+        }
+
+        // ── Пул ────────────────────────────────────────────────────────────────
+
+        private BallController GetOrCreate(int index)
+        {
+            BallController found = FindInactive();
+            if (found != null) return found;
+
+            GameObject go = _ballPrefab != null
+                ? Instantiate(_ballPrefab)
+                : CreateFallbackBall();
+            go.name = $"Ball_{_pool.Count}";
+
+            BallController ball = go.AddComponent<BallController>();
+            _pool.Add(ball);
+            Debug.Log($"[BallSpawner] Пул: создан новый шар, размер пула={_pool.Count}");
+            return ball;
+        }
+
+        // ── Поиск свободного шара в пуле ────────────────────────────────────────
+
+        private BallController FindInactive()
+        {
+            foreach (var b in _pool)
+                if (!b.IsAlive) return b;
+            return null;
+        }
+
+        private static GameObject CreateFallbackBall()
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.transform.localScale = Vector3.one * 0.25f;
+            Destroy(go.GetComponent<Collider>());
+            go.GetComponent<Renderer>().material.color = new Color(1f, 0.3f, 0.1f);
+            return go;
         }
 
         private Vector2 RandomInteriorPos(Rect bounds)

@@ -7,6 +7,8 @@ namespace HippoGame.Hippo
     /// Оркестратор: читает ввод → проверяет через DirectionGuard → передаёт в CellMovement.
     public class HippoController : MonoBehaviour, IInitializable, IHippoController
     {
+        [SerializeField] private float _spriteScale = 1f;
+
         private IInputProvider   _input;
         private CellMovement     _movement;
         private IBoundaryService _boundary;
@@ -34,7 +36,7 @@ namespace HippoGame.Hippo
             else
                 sr.sortingOrder = 10;
 
-            transform.localScale = Vector3.one;
+            transform.localScale = Vector3.one * _spriteScale;
             PlaceAtSpawn();
         }
 

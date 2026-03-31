@@ -1,5 +1,6 @@
 using UnityEngine;
 using HippoGame.Interfaces;
+using HippoGame.Zone;
 
 namespace HippoGame.Grid
 {
@@ -8,7 +9,7 @@ namespace HippoGame.Grid
     {
         [SerializeField] private Texture2D _fillTexture;
         [SerializeField] private int       _pixelsPerUnit = 10;
-        [SerializeField] private Vector2   _zoneSize      = new Vector2(11f, 7.6f);
+        [SerializeField] private GameZone  _zone;          // единый источник размера — тот же что у коллайдера
 
         private CellState[,] _cells;
         private Texture2D    _gridTexture;
@@ -39,8 +40,12 @@ namespace HippoGame.Grid
 
         private void BuildGrid()
         {
-            Vector2 zoneSize = _zoneSize;
-            _bounds    = new Rect(-zoneSize.x / 2f, -zoneSize.y / 2f, zoneSize.x, zoneSize.y);
+            Rect zoneBounds = _zone != null
+                ? _zone.GetBounds()
+                : new Rect(-5.5f, -3.8f, 11f, 7.6f);
+
+            Vector2 zoneSize = new Vector2(zoneBounds.width, zoneBounds.height);
+            _bounds    = zoneBounds;
             _columns   = Mathf.Max(2, Mathf.RoundToInt(zoneSize.x * _pixelsPerUnit));
             _rows      = Mathf.Max(2, Mathf.RoundToInt(zoneSize.y * _pixelsPerUnit));
             _pixelSize = 1f / _pixelsPerUnit;
@@ -50,11 +55,10 @@ namespace HippoGame.Grid
 
         private void CreateQuad()
         {
-            Vector2    zoneSize = _zoneSize;
+            Vector2    zoneSize = new Vector2(_bounds.width, _bounds.height);
             GameObject quad     = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.name = "GridQuad";
-            quad.transform.SetParent(transform);
-            quad.transform.position   = new Vector3(0f, 0f, 0.5f);
+            quad.transform.position   = new Vector3(_bounds.center.x, _bounds.center.y, 0.5f);
             quad.transform.localScale = new Vector3(zoneSize.x, zoneSize.y, 1f);
 
             _gridTexture = new Texture2D(_columns, _rows, TextureFormat.RGBA32, false)

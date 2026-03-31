@@ -12,6 +12,7 @@ namespace HippoGame.Interfaces
         void                   ClearBalls();
         bool                   RemoveOneBall();
         void                   SlowBalls(float factor);
+        void                   SetBallsVisible(bool visible);
         IReadOnlyList<Vector2> GetPositions();
     }
 }
