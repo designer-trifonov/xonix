@@ -70,6 +70,8 @@ namespace HippoGame.Core
                 container.Register<IParticleService>(_particleEffects);
             container.Register<HippoGridInteractor>(_hippoGridInteractor);
             container.Register<LevelManager>(new LevelManager());
+            container.Register<IGameLogger>(new GameLogger());
+            container.Register<IPauseService>(new PauseService());
             return container;
         }
 
@@ -94,7 +96,8 @@ namespace HippoGame.Core
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
                 _particleEffects != null ? container.Resolve<IParticleService>() : null,
-                container.Resolve<IBallSpawner>());
+                container.Resolve<IBallSpawner>(),
+                container.Resolve<IGameLogger>());
 
             _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
 
@@ -118,10 +121,11 @@ namespace HippoGame.Core
             if (_scoreUI   != null) _scoreUI.Inject(state);
             if (_levelUI   != null) _levelUI.Inject(state);
             if (_percentUI != null) _percentUI.Inject(state, grid);
-            if (_shopUI    != null) _shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>());
+            if (_shopUI    != null) _shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>());
 
             if (_gameOverUI != null)
             {
+                _gameOverUI.Inject(container.Resolve<IPauseService>());
                 levelManager.OnGameOver += _gameOverUI.Show;
                 _gameOverUI.OnRestart   += levelManager.RestartFromLevel1;
                 _gameOverUI.OnWatchAd   += levelManager.ContinueAfterAd;
@@ -137,10 +141,5 @@ namespace HippoGame.Core
             if (_percentUI != null) _gameStartController.RegisterInit(_percentUI.Initialize);
         }
 
-        private void Update()
-        {
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
-                Application.Quit();
-        }
     }
 }

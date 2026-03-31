@@ -37,6 +37,12 @@ namespace HippoGame.Core
             Debug.Log("[GameStartController] Игра запущена");
         }
 
+        private void Update()
+        {
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+                Application.Quit();
+        }
+
         private void SetVisible(bool visible)
         {
             if (_hideUntilStart == null) return;

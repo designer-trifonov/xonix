@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using HippoGame.Interfaces;
 
 namespace HippoGame.UI
 {
@@ -12,9 +13,12 @@ namespace HippoGame.UI
         [SerializeField] private Button     _restartButton;
         [SerializeField] private TMP_Text   _adButtonText;
 
+        private IPauseService _pause;
+
         public event Action OnWatchAd;
         public event Action OnRestart;
 
+        public void Inject(IPauseService pause) => _pause = pause;
 
         private void Awake()
         {
@@ -23,17 +27,16 @@ namespace HippoGame.UI
             _restartButton.onClick.AddListener(OnRestartClicked);
         }
 
-
         public void Show()
         {
             _panel.SetActive(true);
-            Time.timeScale = 0f;
+            _pause?.Pause();
         }
 
         public void Hide()
         {
             _panel.SetActive(false);
-            Time.timeScale = 1f;
+            _pause?.Resume();
         }
 
         private void OnWatchAdClicked()

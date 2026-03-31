@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using HippoGame.Interfaces;
 using HippoGame.Grid;
+using static HippoGame.Grid.GridUtils;
 
 namespace HippoGame.Core
 {
@@ -60,7 +61,7 @@ namespace HippoGame.Core
         {
             _movement.Stop();
 
-            float pct   = CountFillPercent();
+            float pct   = CountFillPercent(_grid);
             float delta = pct - _lastFillPct;
             _lastFillPct = pct;
 
@@ -127,18 +128,5 @@ namespace HippoGame.Core
             _ballSpawner?.ClearBalls();
         }
 
-        private float CountFillPercent()
-        {
-            int total = _grid.Columns * _grid.Rows;
-            if (total == 0) return 0f;
-
-            int filled = 0;
-            for (int x = 0; x < _grid.Columns; x++)
-            for (int y = 0; y < _grid.Rows; y++)
-                if (_grid.GetCell(x, y) == CellState.Filled)
-                    filled++;
-
-            return (float)filled / total * 100f;
-        }
     }
 }

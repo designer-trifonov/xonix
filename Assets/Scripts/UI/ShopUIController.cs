@@ -16,16 +16,18 @@ namespace HippoGame.UI
         [SerializeField] private Button _removeBallButton;
         [SerializeField] private Button _slowBallsButton;
 
-        private IGameState   _gameState;
-        private IBallSpawner _ballSpawner;
-        private IAdService   _adService;
-        private bool         _adInProgress;
+        private IGameState    _gameState;
+        private IBallSpawner  _ballSpawner;
+        private IAdService    _adService;
+        private IPauseService _pause;
+        private bool          _adInProgress;
 
-        public void Inject(IGameState gameState, IBallSpawner ballSpawner, IAdService adService)
+        public void Inject(IGameState gameState, IBallSpawner ballSpawner, IAdService adService, IPauseService pause)
         {
             _gameState   = gameState;
             _ballSpawner = ballSpawner;
             _adService   = adService;
+            _pause       = pause;
         }
 
         private void Awake()
@@ -48,14 +50,14 @@ namespace HippoGame.UI
         private void OpenShop()
         {
             _shopPanel.SetActive(true);
-            Time.timeScale = 0f;
+            _pause?.Pause();
             _ballSpawner.SetBallsVisible(false);
         }
 
         private void CloseShop()
         {
             _shopPanel.SetActive(false);
-            Time.timeScale = 1f;
+            _pause?.Resume();
             _ballSpawner.SetBallsVisible(true);
             _adInProgress = false;
             SetAllButtonsInteractable(true);

@@ -4,16 +4,15 @@ using HippoGame.Zone;
 
 namespace HippoGame.Grid
 {
-    /// Пиксельная сетка клеток + рендер состояния через Texture2D.
+    /// Логика клеточной сетки: хранение состояний, координатные преобразования.
+    /// Рендеринг делегирован GridTextureRenderer.
     public class GameGrid : MonoBehaviour, IGridService, IGridRenderer
     {
-        [SerializeField] private Texture2D _fillTexture;
-        [SerializeField] private int       _pixelsPerUnit = 10;
-        [SerializeField] private GameZone  _zone;          // единый источник размера — тот же что у коллайдера
+        [SerializeField] private int                 _pixelsPerUnit = 10;
+        [SerializeField] private GameZone            _zone;
+        [SerializeField] private GridTextureRenderer _renderer;
 
         private CellState[,] _cells;
-        private Texture2D    _gridTexture;
-        private bool         _dirty;
         private int          _columns;
         private int          _rows;
         private Rect         _bounds;
@@ -27,15 +26,8 @@ namespace HippoGame.Grid
         public void Initialize()
         {
             BuildGrid();
-            CreateQuad();
+            _renderer?.Setup(_columns, _rows, _bounds);
             ResetCells();
-        }
-
-        private void LateUpdate()
-        {
-            if (!_dirty) return;
-            _gridTexture.Apply();
-            _dirty = false;
         }
 
         private void BuildGrid()
@@ -44,34 +36,12 @@ namespace HippoGame.Grid
                 ? _zone.GetBounds()
                 : new Rect(-5.5f, -3.8f, 11f, 7.6f);
 
-            Vector2 zoneSize = new Vector2(zoneBounds.width, zoneBounds.height);
             _bounds    = zoneBounds;
-            _columns   = Mathf.Max(2, Mathf.RoundToInt(zoneSize.x * _pixelsPerUnit));
-            _rows      = Mathf.Max(2, Mathf.RoundToInt(zoneSize.y * _pixelsPerUnit));
+            _columns   = Mathf.Max(2, Mathf.RoundToInt(zoneBounds.width  * _pixelsPerUnit));
+            _rows      = Mathf.Max(2, Mathf.RoundToInt(zoneBounds.height * _pixelsPerUnit));
             _pixelSize = 1f / _pixelsPerUnit;
             _cells     = new CellState[_columns, _rows];
             Debug.Log($"[GameGrid] Сетка {_columns}x{_rows} пикселей ({_pixelsPerUnit}ppu)");
-        }
-
-        private void CreateQuad()
-        {
-            Vector2    zoneSize = new Vector2(_bounds.width, _bounds.height);
-            GameObject quad     = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            quad.name = "GridQuad";
-            quad.transform.position   = new Vector3(_bounds.center.x, _bounds.center.y, 0.5f);
-            quad.transform.localScale = new Vector3(zoneSize.x, zoneSize.y, 1f);
-
-            _gridTexture = new Texture2D(_columns, _rows, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Point
-            };
-
-            Renderer rend = quad.GetComponent<Renderer>();
-            rend.material             = new Material(Shader.Find("Sprites/Default"));
-            rend.material.mainTexture = _gridTexture;
-
-            Refresh(this);
-            Debug.Log("[GameGrid] Quad создан, текстура привязана");
         }
 
         public CellState GetCell(int x, int y) => _cells[x, y];
@@ -79,8 +49,7 @@ namespace HippoGame.Grid
         public void SetCell(int x, int y, CellState state)
         {
             _cells[x, y] = state;
-            _gridTexture.SetPixel(x, y, CellColor(x, y));
-            _dirty = true;
+            _renderer?.SetPixel(x, y, state);
         }
 
         public Vector2Int WorldToCell(Vector2 worldPos)
@@ -114,34 +83,6 @@ namespace HippoGame.Grid
             }
         }
 
-        public void Refresh(IGridService grid)
-        {
-            if (_gridTexture == null) return;
-            for (int x = 0; x < _columns; x++)
-            for (int y = 0; y < _rows; y++)
-                _gridTexture.SetPixel(x, y, CellColor(x, y));
-            _gridTexture.Apply();
-        }
-
-        private static readonly Color BorderColor = new Color(0.85f, 0.85f, 0.85f, 1f);
-
-        private Color CellColor(int x, int y)
-        {
-            if (x == 0 || x == _columns - 1 || y == 0 || y == _rows - 1)
-                return BorderColor;
-            return _cells[x, y] switch
-            {
-                CellState.Filled => FillColor(x, y),
-                CellState.Trail  => Color.yellow,
-                _                => Color.clear
-            };
-        }
-
-        private Color FillColor(int x, int y)
-        {
-            if (_fillTexture == null || !_fillTexture.isReadable)
-                return new Color(0.2f, 0.6f, 1f);
-            return _fillTexture.GetPixelBilinear((float)x / _columns, (float)y / _rows);
-        }
+        public void Refresh(IGridService grid) => _renderer?.Refresh(grid);
     }
 }

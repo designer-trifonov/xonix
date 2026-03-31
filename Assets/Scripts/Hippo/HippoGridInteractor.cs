@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.Interfaces;
 using HippoGame.Grid;
-using HippoGame.Core;
 
 namespace HippoGame.Hippo
 {
@@ -18,6 +17,8 @@ namespace HippoGame.Hippo
         private IParticleService _particles;
         private IBallSpawner     _ballSpawner;
         private Transform        _hippoTransform;
+        private IGameLogger      _logger;
+        private TrailWriter      _trailWriter;
 
         private Vector2Int _lastCell;
         private Vector2Int _segmentStartCell;
@@ -33,7 +34,8 @@ namespace HippoGame.Hippo
 
         public void Inject(IGridService grid, IFillService fill, ITrailService trail,
             Transform hippoTransform, IMovementBehaviour movement,
-            IParticleService particles = null, IBallSpawner ballSpawner = null)
+            IParticleService particles = null, IBallSpawner ballSpawner = null,
+            IGameLogger logger = null)
         {
             _grid           = grid;
             _fill           = fill;
@@ -41,11 +43,13 @@ namespace HippoGame.Hippo
             _particles      = particles;
             _ballSpawner    = ballSpawner;
             _hippoTransform = hippoTransform;
+            _logger         = logger;
+            _trailWriter    = new TrailWriter(grid, trail);
 
             movement.OnDirectionChanged += OnMovementDirectionChanged;
             if (movement is HippoGame.Movement.CellMovement cm)
                 cm.OnCellChanged += OnCellChanged;
-            GameLogger.Log("[HippoGridInteractor] Inject — все зависимости получены");
+            _logger?.Log("[HippoGridInteractor] Inject — все зависимости получены");
         }
 
         public void Initialize()
@@ -54,7 +58,7 @@ namespace HippoGame.Hippo
             _segmentStartCell = _lastCell;
             _isDrawing        = false;
             _hitInProgress    = false;
-            GameLogger.Log($"[HippoGridInteractor] Initialize: startCell=({_lastCell.x},{_lastCell.y})");
+            _logger?.Log($"[HippoGridInteractor] Initialize: startCell=({_lastCell.x},{_lastCell.y})");
         }
 
         // ── Событие смены направления ───────────────────────────────────────────────
@@ -62,50 +66,7 @@ namespace HippoGame.Hippo
         {
             _currentDir       = newDir;
             _segmentStartCell = _grid.WorldToCell(_hippoTransform.position);
-            GameLogger.Log($"[HippoGridInteractor] Направление → ({newDir.x},{newDir.y}) segStart={_segmentStartCell}");
-        }
-
-        // ── Атомарная запись сегмента в grid ────────────────────────────────────────
-        private void CommitSegment(Vector2Int from, Vector2Int to)
-        {
-            if (from == to) return;
-
-            Vector2Int diff = to - from;
-            Vector2Int step;
-            int        steps;
-
-            bool diagonal = diff.x != 0 && diff.y != 0;
-            if (diagonal)
-            {
-                steps = Mathf.Max(Mathf.Abs(diff.x), Mathf.Abs(diff.y));
-                step  = new Vector2Int(diff.x > 0 ? 1 : -1, diff.y > 0 ? 1 : -1);
-            }
-            else if (Mathf.Abs(diff.x) >= Mathf.Abs(diff.y))
-            {
-                steps = Mathf.Abs(diff.x);
-                step  = new Vector2Int(diff.x > 0 ? 1 : -1, 0);
-            }
-            else
-            {
-                steps = Mathf.Abs(diff.y);
-                step  = new Vector2Int(0, diff.y > 0 ? 1 : -1);
-            }
-
-            for (int i = 0; i <= steps; i++)
-            {
-                Vector2Int c  = from + step * i;
-                if (!_grid.IsInBounds(c)) break;
-                CellState  cs = _grid.GetCell(c.x, c.y);
-                if (cs == CellState.Empty)
-                {
-                    _trail.AddPoint(c);
-                    _grid.SetCell(c.x, c.y, CellState.Trail);
-                }
-                else if (cs == CellState.Filled)
-                {
-                    _trail.AddPoint(c); // визуал — не меняем grid
-                }
-            }
+            _logger?.Log($"[HippoGridInteractor] Направление → ({newDir.x},{newDir.y}) segStart={_segmentStartCell}");
         }
 
         // ── Событие от CellMovement: гиппо шагнул в новую клетку ───────────────────
@@ -124,7 +85,7 @@ namespace HippoGame.Hippo
             if (_hitInProgress && isEdge)
             {
                 _hitInProgress = false;
-                GameLogger.Log($"[HippoGridInteractor] Пристыковался к стене ({cell.x},{cell.y})");
+                _logger?.Log($"[HippoGridInteractor] Пристыковался к стене ({cell.x},{cell.y})");
                 return;
             }
 
@@ -139,9 +100,9 @@ namespace HippoGame.Hippo
                 if (isEdge || state == CellState.Filled)
                 {
                     _isDrawing = false;
-                    GameLogger.Log($"[HippoGridInteractor] ══ СТОП ══ ячейка=({cell.x},{cell.y}) трейл={_trail.Points.Count} кл");
+                    _logger?.Log($"[HippoGridInteractor] ══ СТОП ══ ячейка=({cell.x},{cell.y}) трейл={_trail.Points.Count} кл");
 
-                    CommitSegment(_segmentStartCell, prevCell);
+                    _trailWriter.CommitSegment(_segmentStartCell, prevCell);
 
                     if (isEdge && _grid.GetCell(cell.x, cell.y) == CellState.Empty)
                     {
@@ -154,18 +115,18 @@ namespace HippoGame.Hippo
 
                     if (_hitInProgress)
                     {
-                        ClearTrailCells();
-                        GameLogger.Log("[TRAIL CLEAR] причина: закрылся после хита");
+                        _trailWriter.ClearTrailCells(_trail.Points);
+                        _logger?.Log("[TRAIL CLEAR] причина: закрылся после хита");
                         _trail.Clear();
 
                         _hitInProgress = false;
-                        GameLogger.Log("[HippoGridInteractor] Хит — заливки нет");
+                        _logger?.Log("[HippoGridInteractor] Хит — заливки нет");
                     }
                     else
                     {
-                        GameLogger.Log($"[HippoGridInteractor] → начинаем заливку (трейл={_trail.Points.Count} кл)");
+                        _logger?.Log($"[HippoGridInteractor] → начинаем заливку (трейл={_trail.Points.Count} кл)");
                         _fill.Fill(_grid, new List<Vector2Int>(_trail.Points), _ballSpawner?.GetPositions());
-                        GameLogger.Log("[TRAIL CLEAR] причина: заливка выполнена");
+                        _logger?.Log("[TRAIL CLEAR] причина: заливка выполнена");
                         _trail.Clear();
 
                         OnZoneFilled?.Invoke();
@@ -177,7 +138,7 @@ namespace HippoGame.Hippo
                 if (!isEdge && state == CellState.Empty && !_hitInProgress)
                 {
                     _isDrawing = true;
-                    GameLogger.Log("[TRAIL CLEAR] причина: начало нового рисования");
+                    _logger?.Log("[TRAIL CLEAR] причина: начало нового рисования");
                     _trail.Clear();
                     // Добавляем стартовую (edge) клетку в trail для непрерывности
                     if (_grid.IsEdge(_segmentStartCell))
@@ -187,7 +148,7 @@ namespace HippoGame.Hippo
                     _trail.AddPoint(cell);
                     _grid.SetCell(cell.x, cell.y, CellState.Trail);
 
-                    GameLogger.Log($"[HippoGridInteractor] НАЧАЛО РИСОВАНИЯ segStart={_segmentStartCell}");
+                    _logger?.Log($"[HippoGridInteractor] НАЧАЛО РИСОВАНИЯ segStart={_segmentStartCell}");
                 }
             }
         }
@@ -219,10 +180,10 @@ namespace HippoGame.Hippo
         {
             if (!IsVulnerable) return;
 
-            GameLogger.Log($"[HippoGridInteractor] OnBallHit @ {hitPosition}");
+            _logger?.Log($"[HippoGridInteractor] OnBallHit @ {hitPosition}");
             _particles?.PlayBallHit(new Vector3(hitPosition.x, hitPosition.y, -0.1f));
-            ClearTrailCells();
-            GameLogger.Log("[TRAIL CLEAR] причина: OnBallHit");
+            _trailWriter.ClearTrailCells(_trail.Points);
+            _logger?.Log("[TRAIL CLEAR] причина: OnBallHit");
             _trail.Clear();
             _isDrawing     = false;
             _hitInProgress = true;
@@ -231,21 +192,14 @@ namespace HippoGame.Hippo
 
         public void ResetState(Vector3 hippoPosition)
         {
-            GameLogger.Log("[HippoGridInteractor] ResetState");
-            ClearTrailCells();
-            GameLogger.Log("[TRAIL CLEAR] причина: ResetState");
+            _logger?.Log("[HippoGridInteractor] ResetState");
+            _trailWriter.ClearTrailCells(_trail.Points);
+            _logger?.Log("[TRAIL CLEAR] причина: ResetState");
             _trail.Clear();
             _isDrawing        = false;
             _hitInProgress    = false;
             _lastCell         = _grid.WorldToCell(hippoPosition);
             _segmentStartCell = _lastCell;
-        }
-
-        private void ClearTrailCells()
-        {
-            foreach (Vector2Int c in _trail.Points)
-                if (_grid.GetCell(c.x, c.y) == CellState.Trail)
-                    _grid.SetCell(c.x, c.y, CellState.Empty);
         }
 
         private static float SegmentDist(Vector2 p, Vector2 a, Vector2 b)

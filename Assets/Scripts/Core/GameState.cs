@@ -14,10 +14,10 @@ namespace HippoGame.Core
 
         public event Action OnChanged;
 
-        public float RequiredFillPercent => _config.BaseFillPercent     + (Level - 1) * _config.FillPercentPerLevel;
-        public float HippoSpeed          => _config.BaseHippoSpeed      + ((Level - 1) / 5) * _config.HippoSpeedPerLevel;
-        public float BallSpeed           => _config.BaseBallSpeed       + (Level - 1) * _config.BallSpeedPerLevel;
-        public int   BallCount           => Level;
+        public float RequiredFillPercent => _config.GetRequiredFillPercent(Level);
+        public float HippoSpeed          => _config.GetHippoSpeed(Level);
+        public float BallSpeed           => _config.GetBallSpeed(Level);
+        public int   BallCount           => _config.GetBallCount(Level);
 
         public GameState(LevelConfig config)
         {

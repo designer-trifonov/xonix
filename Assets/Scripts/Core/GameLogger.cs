@@ -1,18 +1,18 @@
 using System;
 using System.IO;
 using UnityEngine;
+using HippoGame.Interfaces;
 
 namespace HippoGame.Core
 {
     /// Пишет логи в файл Assets/Logs/session_*.log и дублирует в Debug.Log.
-    /// Использование: GameLogger.Log("[HippoGridInteractor] ...");
-    public static class GameLogger
+    public class GameLogger : IGameLogger
     {
-        private static string   _filePath;
-        private static bool     _initialized;
-        private static StreamWriter _writer;
+        private string      _filePath;
+        private bool        _initialized;
+        private StreamWriter _writer;
 
-        private static void Init()
+        private void Init()
         {
             if (_initialized) return;
             _initialized = true;
@@ -31,7 +31,7 @@ namespace HippoGame.Core
             Debug.Log($"[GameLogger] Лог пишется в: {_filePath}");
         }
 
-        public static void Log(string msg)
+        public void Log(string msg)
         {
             Init();
             string line = $"[{Time.frameCount:D6}] {msg}";
@@ -39,7 +39,7 @@ namespace HippoGame.Core
             Debug.Log(msg);
         }
 
-        public static void Warn(string msg)
+        public void Warn(string msg)
         {
             Init();
             string line = $"[{Time.frameCount:D6}] WARN {msg}";
@@ -47,7 +47,7 @@ namespace HippoGame.Core
             Debug.LogWarning(msg);
         }
 
-        public static void Error(string msg)
+        public void Error(string msg)
         {
             Init();
             string line = $"[{Time.frameCount:D6}] ERROR {msg}";
@@ -55,7 +55,7 @@ namespace HippoGame.Core
             Debug.LogError(msg);
         }
 
-        public static void Flush()
+        public void Flush()
         {
             _writer?.Flush();
             _writer?.Close();

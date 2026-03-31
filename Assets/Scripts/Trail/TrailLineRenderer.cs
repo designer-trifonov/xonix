@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.Interfaces;
-using HippoGame.Core;
 
 namespace HippoGame.Trail
 {
@@ -16,6 +15,7 @@ namespace HippoGame.Trail
         private LineRenderer     _lr;
         private Transform        _hippo;
         private IDrawingState    _drawingState;
+        private IGameLogger      _logger;
         private Vector3          _lastPos;
         private List<Vector3>    _positions = new List<Vector3>();
 
@@ -33,12 +33,13 @@ namespace HippoGame.Trail
             _lr.numCornerVertices = 4;
         }
 
-        public void Inject(Transform hippo, IDrawingState drawingState = null)
+        public void Inject(Transform hippo, IDrawingState drawingState = null, IGameLogger logger = null)
         {
             _hippo        = hippo;
             _drawingState = drawingState;
+            _logger       = logger;
             _lastPos      = hippo.position;
-            GameLogger.Log("[TrailLineRenderer] Inject — hippo transform получен");
+            _logger?.Log("[TrailLineRenderer] Inject — hippo transform получен");
         }
 
         private void Update()
@@ -66,7 +67,7 @@ namespace HippoGame.Trail
             _positions.Clear();
             _lr.positionCount = 0;
             _lastPos = Vector3.positiveInfinity; // сброс, чтобы первая точка всегда добавилась
-            GameLogger.Log("[TRAIL CLEAR] причина: TrailLineRenderer.Clear() вызван явно");
+            _logger?.Log("[TRAIL CLEAR] причина: TrailLineRenderer.Clear() вызван явно");
         }
     }
 }

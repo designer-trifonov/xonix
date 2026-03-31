@@ -22,5 +22,10 @@ namespace HippoGame.Core
 
         [Header("Score")]
         public int PointsPerLevel = 10000;
+
+        public float GetRequiredFillPercent(int level) => BaseFillPercent     + (level - 1) * FillPercentPerLevel;
+        public float GetHippoSpeed(int level)          => BaseHippoSpeed      + ((level - 1) / 5) * HippoSpeedPerLevel;
+        public float GetBallSpeed(int level)           => BaseBallSpeed       + (level - 1) * BallSpeedPerLevel;
+        public int   GetBallCount(int level)           => level;
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using HippoGame.Interfaces;
-using HippoGame.Core;
 
 namespace HippoGame.Movement
 {
@@ -19,10 +18,7 @@ namespace HippoGame.Movement
         private bool       _initialized;
 
         // Визуальная интерполяция
-        private Vector3 _visualFrom;
-        private Vector3 _visualTo;
-        private float   _visualT;       // 0..1
-        private bool    _interpolating;
+        private readonly CellVisualInterpolator _visual = new CellVisualInterpolator();
 
         public float      Speed     { get; set; } = 5f;
         public bool       Stopped   { get; private set; }
@@ -41,23 +37,21 @@ namespace HippoGame.Movement
 
         public void Stop()
         {
-            Stopped      = true;
-            _pending     = Vector2Int.zero;
-            _interpolating = false;
+            Stopped  = true;
+            _pending = Vector2Int.zero;
+            _visual.Reset(_visual.Position);
         }
 
         public void Resume(Transform target = null)
         {
-            Stopped        = false;
-            _pending       = Vector2Int.zero;
-            _direction     = Vector2Int.zero;
-            _interpolating = false;
+            Stopped    = false;
+            _pending   = Vector2Int.zero;
+            _direction = Vector2Int.zero;
 
             if (target != null)
             {
                 _cell        = _grid.WorldToCell(target.position);
-                _visualFrom  = target.position;
-                _visualTo    = target.position;
+                _visual.Reset(target.position);
                 _initialized = true;
             }
             else
@@ -85,9 +79,8 @@ namespace HippoGame.Movement
         {
             if (!_initialized)
             {
-                _cell        = _grid.WorldToCell(target.position);
-                _visualFrom  = target.position;
-                _visualTo    = target.position;
+                _cell = _grid.WorldToCell(target.position);
+                _visual.Reset(target.position);
                 _initialized = true;
             }
 
@@ -105,7 +98,7 @@ namespace HippoGame.Movement
             // Плавная интерполяция к следующей клетке
             float stepTime = _grid.CellSize / Speed;
 
-            if (!_interpolating)
+            if (!_visual.IsActive)
             {
                 // Применяем буфер, берём следующую клетку
                 ApplyPending();
@@ -120,25 +113,16 @@ namespace HippoGame.Movement
 
                 Vector2 nextWorld = _grid.CellToWorld(next);
 
-                _prevCell      = _cell;
-                _cell          = next;
-                _visualFrom    = target.position;
-                _visualTo      = new Vector3(nextWorld.x, nextWorld.y, target.position.z);
-                _visualT       = 0f;
-                _interpolating = true;
+                _prevCell = _cell;
+                _cell     = next;
+                _visual.Start(target.position, new Vector3(nextWorld.x, nextWorld.y, target.position.z));
             }
 
             // Двигаем визуально
-            _visualT += Time.deltaTime / stepTime;
+            bool done = _visual.Advance(Time.deltaTime, stepTime);
+            if (done) OnCellChanged?.Invoke(_prevCell, _cell);
 
-            if (_visualT >= 1f)
-            {
-                _visualT       = 1f;
-                _interpolating = false;
-                OnCellChanged?.Invoke(_prevCell, _cell);
-            }
-
-            target.position = Vector3.Lerp(_visualFrom, _visualTo, _visualT);
+            target.position = _visual.Position;
         }
 
         // IMovementBehaviour — совместимость

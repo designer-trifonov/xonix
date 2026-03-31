@@ -10,7 +10,7 @@ namespace HippoGame.Ball
     {
         [SerializeField] private GameObject _ballPrefab;
 
-        private readonly List<BallController> _pool  = new();
+        private BallPool               _pool;
         private readonly List<IBallController> _balls = new();
 
         private IGridService      _grid;
@@ -27,6 +27,7 @@ namespace HippoGame.Ball
             _boundary     = boundary;
             _hippo        = hippo;
             _interactable = interactable;
+            _pool         = new BallPool(_ballPrefab);
             Debug.Log("[BallSpawner] Inject — все зависимости получены");
         }
 
@@ -40,7 +41,7 @@ namespace HippoGame.Ball
 
             for (int i = 0; i < count; i++)
             {
-                BallController ball = GetOrCreate(i);
+                BallController ball = _pool.Get();
 
                 Vector2 pos = RandomInteriorPos(bounds);
                 ball.transform.position = new Vector3(pos.x, pos.y, -0.5f);
@@ -124,42 +125,6 @@ namespace HippoGame.Ball
             foreach (var b in _balls)
                 if (b.IsAlive) b.Kill();
             _balls.Clear();
-        }
-
-        // ── Пул ────────────────────────────────────────────────────────────────
-
-        private BallController GetOrCreate(int index)
-        {
-            BallController found = FindInactive();
-            if (found != null) return found;
-
-            GameObject go = _ballPrefab != null
-                ? Instantiate(_ballPrefab)
-                : CreateFallbackBall();
-            go.name = $"Ball_{_pool.Count}";
-
-            BallController ball = go.AddComponent<BallController>();
-            _pool.Add(ball);
-            Debug.Log($"[BallSpawner] Пул: создан новый шар, размер пула={_pool.Count}");
-            return ball;
-        }
-
-        // ── Поиск свободного шара в пуле ────────────────────────────────────────
-
-        private BallController FindInactive()
-        {
-            foreach (var b in _pool)
-                if (!b.IsAlive) return b;
-            return null;
-        }
-
-        private static GameObject CreateFallbackBall()
-        {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            go.transform.localScale = Vector3.one * 0.25f;
-            Destroy(go.GetComponent<Collider>());
-            go.GetComponent<Renderer>().material.color = new Color(1f, 0.3f, 0.1f);
-            return go;
         }
 
         private Vector2 RandomInteriorPos(Rect bounds)
