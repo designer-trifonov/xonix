@@ -1,0 +1,3 @@
+﻿Build path: E:/yandexOrderRoma/WebGLBuild
+Build number: 6
+PluginYG version: 2.008

@@ -1093,6 +1093,7 @@ GameObject:
   m_Component:
   - component: {fileID: 449707916}
   - component: {fileID: 449707917}
+  - component: {fileID: 449707918}
   m_Layer: 0
   m_Name: GameGridController
   m_TagString: Untagged
@@ -1127,9 +1128,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d4de88a31db3f0428523aa0ad1c0ee7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HippoGame.Grid.GameGrid
-  _fillTexture: {fileID: 0}
   _pixelsPerUnit: 20
   _zone: {fileID: 1051667861}
+  _renderer: {fileID: 449707918}
+--- !u!114 &449707918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 449707915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 676d3706a79937345945240f6f179bdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HippoGame.Grid.GridTextureRenderer
+  _fillTexture: {fileID: 0}
+  _pixelsPerUnit: 20
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1921,26 +1936,14 @@ MonoBehaviour:
   _hippoGridInteractor: {fileID: 1269075805}
   _particleEffects: {fileID: 0}
   _ballSpawner: {fileID: 386709740}
+  _adController: {fileID: 1037439845}
+  _gameStartController: {fileID: 1644014591}
   _livesUI: {fileID: 1249081719}
   _scoreUI: {fileID: 2060483119}
   _levelUI: {fileID: 1394527603}
   _percentUI: {fileID: 1152594492}
   _gameOverUI: {fileID: 626786086}
   _shopUI: {fileID: 15860767}
-  _rulesPopup: {fileID: 1360563944}
-  _hideUntilStart:
-  - {fileID: 1051667859}
-  - {fileID: 1752489936}
-  - {fileID: 386709738}
-  - {fileID: 853314111}
-  - {fileID: 1269075803}
-  - {fileID: 1483067461}
-  - {fileID: 1796660458}
-  - {fileID: 124722130}
-  - {fileID: 216429012}
-  - {fileID: 137367319}
-  - {fileID: 1752489936}
-  - {fileID: 449707915}
 --- !u!4 &626786085
 Transform:
   m_ObjectHideFlags: 0
@@ -2856,6 +2859,50 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &1037439843
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1037439844}
+  - component: {fileID: 1037439845}
+  m_Layer: 0
+  m_Name: AdController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1037439844
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037439843}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1369350987}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1037439845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037439843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad62fc1820eca59469feb43985d585d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HippoGame.Ads.AdController
 --- !u!1 &1051667859
 GameObject:
   m_ObjectHideFlags: 0
@@ -3122,6 +3169,9 @@ Transform:
   - {fileID: 1152594493}
   - {fileID: 15860766}
   - {fileID: 1360563945}
+  - {fileID: 1037439844}
+  - {fileID: 1644014590}
+  - {fileID: 1841616123}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1394527601
@@ -3561,6 +3611,61 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1599645992}
   m_CullTransparentMesh: 1
+--- !u!1 &1644014589
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1644014590}
+  - component: {fileID: 1644014591}
+  m_Layer: 0
+  m_Name: GameStartController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1644014590
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644014589}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1369350987}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1644014591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644014589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e258c3c43d0b048b46139c56316ca1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HippoGame.Core.GameStartController
+  _rulesPopup: {fileID: 1360563944}
+  _hideUntilStart:
+  - {fileID: 137367319}
+  - {fileID: 1483067461}
+  - {fileID: 1796660458}
+  - {fileID: 1026804263}
+  - {fileID: 1752489936}
+  - {fileID: 1051667859}
+  - {fileID: 1269075803}
+  - {fileID: 853314111}
+  - {fileID: 386709738}
 --- !u!1 &1709992772
 GameObject:
   m_ObjectHideFlags: 0
@@ -4323,6 +4428,37 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 110
   m_TargetDisplay: 0
+--- !u!1 &1841616122
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1841616123}
+  m_Layer: 0
+  m_Name: GridTextureRenderer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1841616123
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841616122}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1369350987}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1882053219
 GameObject:
   m_ObjectHideFlags: 0
