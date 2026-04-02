@@ -18,14 +18,12 @@ namespace HippoGame.Core
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
 
-        public void Initialize()
+        private void Start()
         {
-            Debug.Log("[GameStartController] Initialize");
             SetVisible(false);
 
             if (_rulesPopup != null)
             {
-                _rulesPopup.Initialize();
                 _rulesPopup.OnClose += OnGameStart;
                 _rulesPopup.Show();
             }
@@ -37,11 +35,7 @@ namespace HippoGame.Core
 
         private void OnGameStart()
         {
-            Debug.Log("[GameStartController] OnGameStart → показываем рекламу");
-            if (_adService != null)
-                _adService.ShowInterstitial();
-            else
-                Debug.LogWarning("[GameStartController] _adService == null — реклама не показана!");
+            _adService?.ShowInterstitial();
             SetVisible(true);
             foreach (var cb in _initCallbacks)
                 cb?.Invoke();

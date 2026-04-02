@@ -19,9 +19,8 @@ namespace HippoGame.Trail
         private Vector3          _lastPos;
         private List<Vector3>    _positions = new List<Vector3>();
 
-        public void Initialize()
+        private void Awake()
         {
-            Debug.Log("[TrailLineRenderer] Initialize");
             _lr = GetComponent<LineRenderer>();
             _lr.useWorldSpace     = true;
             _lr.startWidth        = LineWidth;

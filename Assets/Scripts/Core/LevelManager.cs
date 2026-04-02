@@ -16,6 +16,7 @@ namespace HippoGame.Core
         private IHippoGridInteractor _interactor;
         private IMovementBehaviour   _movement;
         private IBoundaryService     _boundary;
+        private IAdService           _adService;
 
         private bool  _levelTransitionPending;
         private float _lastFillPct;
@@ -25,7 +26,7 @@ namespace HippoGame.Core
         public void Inject(IGameState state, IGridService grid,
             IBallSpawner spawner, IHippoController hippo,
             IHippoGridInteractor interactor, IMovementBehaviour movement,
-            IBoundaryService boundary)
+            IBoundaryService boundary, IAdService adService = null)
         {
             _gameState   = state;
             _grid        = grid;
@@ -34,6 +35,7 @@ namespace HippoGame.Core
             _interactor  = interactor;
             _movement    = movement;
             _boundary    = boundary;
+            _adService   = adService;
             Debug.Log("[LevelManager] Inject — все зависимости получены");
         }
 
@@ -104,9 +106,13 @@ namespace HippoGame.Core
 
         public void ContinueAfterAd()
         {
-            Debug.Log("[LevelManager] Продолжение после рекламы — восстановление жизней");
-            _gameState.RestoreLives();
-            StartLevel();
+            Debug.Log("[LevelManager] ContinueAfterAd — показываем rewarded");
+            _adService?.ShowRewarded("continue", () =>
+            {
+                Debug.Log("[LevelManager] Rewarded выдана — восстановление жизней");
+                _gameState.RestoreLives();
+                StartLevel();
+            });
         }
 
         private void ResetField()

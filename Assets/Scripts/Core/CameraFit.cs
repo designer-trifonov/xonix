@@ -20,25 +20,23 @@ namespace HippoGame.Core
         private int _lastWidth;
         private int _lastHeight;
 
-        public void Initialize()
+        private void Awake()
         {
-            Debug.Log("[CameraFit] Initialize");
             _camera = GetComponent<Camera>();
             if (_header != null)
                 _headerDefaultPos = _header.anchoredPosition;
-            Apply();
         }
+
+        private void Start() => Apply();
 
         private void Update()
         {
-            if (_camera == null) return;
             if (Screen.width != _lastWidth || Screen.height != _lastHeight)
                 Apply();
         }
 
         private void Apply()
         {
-            if (_camera == null) return;
             _lastWidth  = Screen.width;
             _lastHeight = Screen.height;
 

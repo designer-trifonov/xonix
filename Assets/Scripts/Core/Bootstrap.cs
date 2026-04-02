@@ -27,8 +27,6 @@ namespace HippoGame.Core
         [SerializeField] private BallSpawner           _ballSpawner;
         [SerializeField] private AdController          _adController;
         [SerializeField] private GameStartController   _gameStartController;
-        [SerializeField] private CameraFit             _cameraFit;
-        [SerializeField] private TrailLineRenderer     _trailLineRenderer;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -52,12 +50,7 @@ namespace HippoGame.Core
             container.Register<IGameState>(gameState);
             container.Register<IBoundaryService>(_gameZone);
             container.Register<IAdService>(_adController);
-            bool isMobile = Application.isMobilePlatform ||
-                            SystemInfo.deviceType == DeviceType.Handheld;
-            IInputProvider inputProvider = isMobile
-                ? (IInputProvider)new TouchInputProvider()
-                : new CombinedInputProvider();
-            container.Register<IInputProvider>(inputProvider);
+            container.Register<IInputProvider>(new KeyboardInputProvider());
             container.Register<HippoController>(_hippoController);
             container.Register<IGridService>(_gameGrid);
             container.Register<IGridRenderer>(_gameGrid);
@@ -122,7 +115,8 @@ namespace HippoGame.Core
                 container.Resolve<IHippoController>(),
                 container.Resolve<IHippoGridInteractor>(),
                 container.Resolve<IMovementBehaviour>(),
-                container.Resolve<IBoundaryService>());
+                container.Resolve<IBoundaryService>(),
+                container.Resolve<IAdService>());
 
             if (_livesUI   != null) _livesUI.Inject(state);
             if (_scoreUI   != null) _scoreUI.Inject(state);
@@ -133,13 +127,10 @@ namespace HippoGame.Core
             if (_gameOverUI != null)
             {
                 _gameOverUI.Inject(container.Resolve<IPauseService>());
-                _gameOverUI.Initialize();
                 levelManager.OnGameOver += _gameOverUI.Show;
                 _gameOverUI.OnRestart   += levelManager.RestartFromLevel1;
                 _gameOverUI.OnWatchAd   += levelManager.ContinueAfterAd;
             }
-
-            if (_shopUI != null) _shopUI.Initialize();
 
             _gameStartController.Inject(container.Resolve<IAdService>());
             _gameStartController.RegisterInit(_gameGrid.Initialize);
@@ -150,11 +141,6 @@ namespace HippoGame.Core
             if (_scoreUI   != null) _gameStartController.RegisterInit(_scoreUI.Initialize);
             if (_levelUI   != null) _gameStartController.RegisterInit(_levelUI.Initialize);
             if (_percentUI != null) _gameStartController.RegisterInit(_percentUI.Initialize);
-
-            if (_trailLineRenderer != null) _trailLineRenderer.Initialize();
-            if (_cameraFit        != null) _cameraFit.Initialize();
-
-            _gameStartController.Initialize();
         }
 
     }

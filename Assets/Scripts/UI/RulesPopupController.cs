@@ -11,9 +11,8 @@ namespace HippoGame.UI
 
         public event Action OnClose;
 
-        public void Initialize()
+        private void Awake()
         {
-            Debug.Log("[RulesPopupController] Initialize");
             _closeButton.onClick.AddListener(OnCloseClicked);
         }
 
