@@ -25,6 +25,7 @@ namespace HippoGame.Grid
 
         public void Initialize()
         {
+            Debug.Log("[GameGrid] Initialize");
             BuildGrid();
             _renderer?.Setup(_columns, _rows, _bounds);
             ResetCells();

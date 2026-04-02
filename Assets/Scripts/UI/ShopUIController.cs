@@ -30,8 +30,9 @@ namespace HippoGame.UI
             _pause       = pause;
         }
 
-        private void Awake()
+        public void Initialize()
         {
+            Debug.Log("[ShopUIController] Initialize");
             _shopPanel.SetActive(false);
             _openShopButton.onClick.AddListener(ToggleShop);
             if (_closeShopButton != null)

@@ -28,6 +28,7 @@ namespace HippoGame.Hippo
 
         public void Initialize()
         {
+            Debug.Log("[HippoController] Initialize");
             SpriteRenderer sr = GetComponent<SpriteRenderer>();
             if (sr == null) sr = gameObject.AddComponent<SpriteRenderer>();
 
@@ -50,9 +51,13 @@ namespace HippoGame.Hippo
             // На границе / по filled — свободное движение в любую сторону.
             if (input != Vector2Int.zero)
             {
-                bool drawing = _drawingState != null && _drawingState.IsDrawing;
-                if (!drawing || !DirectionGuard.IsReverse(_movement.Direction, input))
-                    _movement.QueueDirection(input);
+                bool hitInProgress = _drawingState != null && _drawingState.IsHitInProgress;
+                if (!hitInProgress)
+                {
+                    bool drawing = _drawingState != null && _drawingState.IsDrawing;
+                    if (!drawing || !DirectionGuard.IsReverse(_movement.Direction, input))
+                        _movement.QueueDirection(input);
+                }
             }
 
             _movement.Tick(transform, _boundary.GetBounds());

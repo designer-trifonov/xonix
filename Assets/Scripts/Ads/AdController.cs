@@ -4,6 +4,7 @@ using HippoGame.Interfaces;
 
 #if YandexGamesPlatform_yg
 using YG;
+using YG.Insides;
 #endif
 
 namespace HippoGame.Ads
@@ -66,7 +67,8 @@ namespace HippoGame.Ads
         public void ShowInterstitial()
         {
 #if YandexGamesPlatform_yg
-            Debug.Log($"[AdController] ShowInterstitial → таймер готов: {YG2.isTimerAdvCompleted} осталось: {YG2.timerInterAdv:F1}s");
+            YGInsides.ResetTimerInterAdv();
+            Debug.Log($"[AdController] ShowInterstitial → таймер сброшен, показываем");
             YG2.optionalPlatform.FirstInterAdvShow();
 #else
             Debug.Log("[AdController] ShowInterstitial (stub — YG не установлен)");

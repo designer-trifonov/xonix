@@ -20,8 +20,9 @@ namespace HippoGame.UI
 
         public void Inject(IPauseService pause) => _pause = pause;
 
-        private void Awake()
+        public void Initialize()
         {
+            Debug.Log("[GameOverUIController] Initialize");
             _panel.SetActive(false);
             _watchAdButton.onClick.AddListener(OnWatchAdClicked);
             _restartButton.onClick.AddListener(OnRestartClicked);

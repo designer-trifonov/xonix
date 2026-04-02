@@ -11,14 +11,15 @@ namespace HippoGame.Hippo
     /// Трейл строится атомарно по событиям смены направления — без FPS-зависимости.
     public class HippoGridInteractor : MonoBehaviour, IInitializable, IBallInteractable, IHippoGridInteractor, IDrawingState
     {
-        private IGridService     _grid;
-        private IFillService     _fill;
-        private ITrailService    _trail;
-        private IParticleService _particles;
-        private IBallSpawner     _ballSpawner;
-        private Transform        _hippoTransform;
-        private IGameLogger      _logger;
-        private TrailWriter      _trailWriter;
+        private IGridService      _grid;
+        private IFillService      _fill;
+        private ITrailService     _trail;
+        private IParticleService  _particles;
+        private IBallSpawner      _ballSpawner;
+        private Transform         _hippoTransform;
+        private IGameLogger       _logger;
+        private TrailWriter       _trailWriter;
+        private IMovementBehaviour _movement;
 
         private Vector2Int _lastCell;
         private Vector2Int _segmentStartCell;
@@ -26,8 +27,9 @@ namespace HippoGame.Hippo
         private bool       _hitInProgress;
         private Vector2Int _currentDir;
 
-        public bool IsVulnerable => _isDrawing && !_hitInProgress;
-        public bool IsDrawing    => _isDrawing;
+        public bool IsVulnerable    => _isDrawing && !_hitInProgress;
+        public bool IsDrawing       => _isDrawing;
+        public bool IsHitInProgress => _hitInProgress;
 
         public event Action OnZoneFilled;
         public event Action OnHit;
@@ -44,6 +46,7 @@ namespace HippoGame.Hippo
             _ballSpawner    = ballSpawner;
             _hippoTransform = hippoTransform;
             _logger         = logger;
+            _movement       = movement;
             _trailWriter    = new TrailWriter(grid, trail);
 
             movement.OnDirectionChanged += OnMovementDirectionChanged;
@@ -64,9 +67,12 @@ namespace HippoGame.Hippo
         // ── Событие смены направления ───────────────────────────────────────────────
         private void OnMovementDirectionChanged(Vector2Int newDir)
         {
-            _currentDir       = newDir;
-            _segmentStartCell = _grid.WorldToCell(_hippoTransform.position);
-            _logger?.Log($"[HippoGridInteractor] Направление → ({newDir.x},{newDir.y}) segStart={_segmentStartCell}");
+            _currentDir = newDir;
+            if (!_isDrawing)
+            {
+                _segmentStartCell = _grid.WorldToCell(_hippoTransform.position);
+                _logger?.Log($"[HippoGridInteractor] Направление → ({newDir.x},{newDir.y}) segStart={_segmentStartCell}");
+            }
         }
 
         // ── Событие от CellMovement: гиппо шагнул в новую клетку ───────────────────
@@ -182,11 +188,21 @@ namespace HippoGame.Hippo
 
             _logger?.Log($"[HippoGridInteractor] OnBallHit @ {hitPosition}");
             _particles?.PlayBallHit(new Vector3(hitPosition.x, hitPosition.y, -0.1f));
+
             _trailWriter.ClearTrailCells(_trail.Points);
             _logger?.Log("[TRAIL CLEAR] причина: OnBallHit");
             _trail.Clear();
+
+            // Телепортация к точке откуда начали движение
+            Vector2 spawnWorld = _grid.CellToWorld(_segmentStartCell);
+            _hippoTransform.position = new Vector3(spawnWorld.x, spawnWorld.y, -1f);
+            _movement?.Resume(_hippoTransform);
+
             _isDrawing     = false;
-            _hitInProgress = true;
+            _hitInProgress = false;
+            _lastCell      = _segmentStartCell;
+            _logger?.Log($"[HippoGridInteractor] Телепорт → ({_segmentStartCell.x},{_segmentStartCell.y})");
+
             OnHit?.Invoke();
         }
 

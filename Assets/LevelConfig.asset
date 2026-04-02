@@ -13,10 +13,8 @@ MonoBehaviour:
   m_Name: LevelConfig
   m_EditorClassIdentifier: Assembly-CSharp::HippoGame.Core.LevelConfig
   StartLives: 3
-  BaseFillPercent: 50
+  BaseFillPercent: 75
   FillPercentPerLevel: 5
   BaseHippoSpeed: 1.5
-  HippoSpeedPerLevel: 0.5
-  BaseBallSpeed: 2
-  BallSpeedPerLevel: 0.5
+  HippoSpeedPerLevel: 0.25
   PointsPerLevel: 10000
