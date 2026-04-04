@@ -3,18 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.UI;
 using HippoGame.Interfaces;
+using HippoGame.Core;
 
 namespace HippoGame.Core
 {
+    /// Управляет стартовой последовательностью:
+    /// RulesPopup → DifficultySelect → запуск игры.
     public class GameStartController : MonoBehaviour
     {
-        [SerializeField] private RulesPopupController _rulesPopup;
-        [SerializeField] private GameObject[]         _hideUntilStart;
+        [SerializeField] private RulesPopupController        _rulesPopup;
+        [SerializeField] private DifficultySelectUIController _difficultySelect;
+        [SerializeField] private GameObject[]                _hideUntilStart;
 
         private readonly List<Action> _initCallbacks = new();
-        private IAdService _adService;
+        private IAdService  _adService;
+        private IGameState  _gameState;
 
-        public void Inject(IAdService adService) => _adService = adService;
+        public void Inject(IAdService adService, IGameState gameState)
+        {
+            _adService  = adService;
+            _gameState  = gameState;
+        }
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
 
@@ -24,22 +33,39 @@ namespace HippoGame.Core
 
             if (_rulesPopup != null)
             {
-                _rulesPopup.OnClose += OnGameStart;
+                _rulesPopup.OnClose += OnRulesClosed;
                 _rulesPopup.Show();
             }
             else
             {
-                OnGameStart();
+                OnRulesClosed();
             }
         }
 
-        private void OnGameStart()
+        // Правила закрыты — показываем выбор сложности
+        private void OnRulesClosed()
         {
+            if (_difficultySelect != null)
+            {
+                _difficultySelect.OnDifficultySelected += OnDifficultyChosen;
+                _difficultySelect.Show();
+            }
+            else
+            {
+                // Нет панели сложности — стартуем со средней
+                OnDifficultyChosen(Difficulty.Medium);
+            }
+        }
+
+        // Сложность выбрана — применяем и запускаем игру
+        private void OnDifficultyChosen(Difficulty d)
+        {
+            _gameState?.SetDifficulty(d);
             _adService?.ShowInterstitial();
             SetVisible(true);
             foreach (var cb in _initCallbacks)
                 cb?.Invoke();
-            Debug.Log("[GameStartController] Игра запущена");
+            Debug.Log($"[GameStartController] Игра запущена | сложность={d}");
         }
 
         private void Update()

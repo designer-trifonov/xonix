@@ -96,7 +96,10 @@ namespace HippoGame.Movement
             }
 
             // Плавная интерполяция к следующей клетке
-            float stepTime = _grid.CellSize / Speed;
+            // Умножаем на magnitude направления: диагональ (1,1) = √2, прямо = 1.
+            // Это выравнивает мировую скорость — диагональный шаг длиннее, но занимает пропорционально больше времени.
+            float dirMag   = _direction == Vector2Int.zero ? 1f : new Vector2(_direction.x, _direction.y).magnitude;
+            float stepTime = _grid.CellSize * dirMag / Speed;
 
             if (!_visual.IsActive)
             {

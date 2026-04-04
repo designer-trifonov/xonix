@@ -6,15 +6,16 @@ namespace HippoGame.Core
 {
     public class GameState : IGameState
     {
-        public int Lives { get; private set; }
-        public int Score { get; private set; } = 0;
-        public int Level { get; private set; } = 1;
+        public int        Lives      { get; private set; }
+        public int        Score      { get; private set; } = 0;
+        public int        Level      { get; private set; } = 1;
+        public Difficulty Difficulty { get; private set; } = Difficulty.Medium;
 
-        private LevelConfig  _config;
+        private LevelConfig _config;
 
         public event Action OnChanged;
 
-        public float RequiredFillPercent => _config.GetRequiredFillPercent(Level);
+        public float RequiredFillPercent => _config.GetRequiredFillPercent(Difficulty);
         public float HippoSpeed          => _config.GetHippoSpeed(Level);
         public float BallSpeed           => _config.GetBallSpeed(Level);
         public int   BallCount           => _config.GetBallCount(Level);
@@ -23,6 +24,13 @@ namespace HippoGame.Core
         {
             _config = config;
             Lives   = config.StartLives;
+        }
+
+        public void SetDifficulty(Difficulty d)
+        {
+            Difficulty = d;
+            Debug.Log($"[GameState] SetDifficulty → {d} | target={RequiredFillPercent:F0}%");
+            OnChanged?.Invoke();
         }
 
         public void ZoneFilled(float fillDeltaPct)
