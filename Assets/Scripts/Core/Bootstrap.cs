@@ -27,6 +27,7 @@ namespace HippoGame.Core
         [SerializeField] private BallSpawner           _ballSpawner;
         [SerializeField] private AdController          _adController;
         [SerializeField] private GameStartController   _gameStartController;
+        [SerializeField] private HippoRespawnHandler  _hippoRespawnHandler;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -135,6 +136,7 @@ namespace HippoGame.Core
             _gameStartController.Inject(container.Resolve<IAdService>());
             _gameStartController.RegisterInit(_gameGrid.Initialize);
             _gameStartController.RegisterInit(container.Resolve<HippoController>().Initialize);
+            if (_hippoRespawnHandler != null) _gameStartController.RegisterInit(_hippoRespawnHandler.Initialize);
             _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);
             _gameStartController.RegisterInit(levelManager.Initialize);
             if (_livesUI   != null) _gameStartController.RegisterInit(_livesUI.Initialize);

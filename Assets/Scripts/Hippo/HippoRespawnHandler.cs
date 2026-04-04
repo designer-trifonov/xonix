@@ -16,8 +16,12 @@ namespace HippoGame.Hippo
 
         private void Awake()
         {
-            _spawnPoint = _hippo.transform.position;
             _interactor.OnHit += OnHit;
+        }
+
+        public void Initialize()
+        {
+            _spawnPoint = _hippo.transform.position;
         }
 
         private void Update()
