@@ -15,9 +15,8 @@ namespace HippoGame.Core
         public float MediumFillPercent = 75f;
         public float HardFillPercent   = 85f;
 
-        [Header("Ball Speed")]
-        public float BaseBallSpeed     = 2f;
-        public float BallSpeedPerLevel = 0.5f;
+        [Header("Ball Speed (константа, не растёт с уровнем)")]
+        public float BallSpeed = 2f;
 
         [Header("Score")]
         public int PointsPerLevel = 10000;
@@ -30,9 +29,9 @@ namespace HippoGame.Core
             _                 => MediumFillPercent
         };
 
-        // Скорость бегемота = скорость арбузов всегда
-        public float GetHippoSpeed(int level) => GetBallSpeed(level);
-        public float GetBallSpeed(int level)  => BaseBallSpeed + (level - 1) * BallSpeedPerLevel;
+        // Скорость бегемота = скорость арбузов, обе константы
+        public float GetHippoSpeed(int level) => BallSpeed;
+        public float GetBallSpeed(int level)  => BallSpeed;
         public int   GetBallCount(int level)  => level;
     }
 }
