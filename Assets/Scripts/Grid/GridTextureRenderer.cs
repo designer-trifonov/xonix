@@ -77,12 +77,21 @@ namespace HippoGame.Grid
             };
         }
 
-        public void SetFillColor(Color color) => _currentFillColor = color;
+        private IGridService _gridService;
+
+        public void SetGridService(IGridService grid) => _gridService = grid;
+
+        public void SetFillColor(Color color)
+        {
+            _currentFillColor = color;
+            if (_gridService != null)
+                Refresh(_gridService);
+        }
 
         private Color FillColor(int x, int y)
         {
             if (_fillTexture != null && _fillTexture.isReadable)
-                return _fillTexture.GetPixelBilinear((float)x / _columns, (float)y / _rows);
+                return _fillTexture.GetPixelBilinear((float)x / _columns, (float)y / _rows) * _currentFillColor;
             return _currentFillColor;
         }
     }

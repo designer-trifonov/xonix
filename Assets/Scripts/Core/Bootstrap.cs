@@ -142,7 +142,7 @@ namespace HippoGame.Core
             if (_hippoRespawnHandler    != null) _gameStartController.RegisterInit(_hippoRespawnHandler.Initialize);
             if (_levelColorController   != null)
             {
-                _levelColorController.Inject(container.Resolve<IGameState>());
+                _levelColorController.Inject(container.Resolve<IGameState>(), container.Resolve<IGridService>());
                 _gameStartController.RegisterInit(_levelColorController.Initialize);
             }
             _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);

@@ -23,13 +23,17 @@ namespace HippoGame.Grid
             new Color(0.55f, 0.58f, 0.80f),  // 46–50 голубично-синий
         };
 
-        private IGameState _gameState;
-        private int        _lastLevel = -1;
+        private IGameState   _gameState;
+        private IGridService _grid;
+        private int          _lastLevel = -1;
 
-        public void Inject(IGameState state)
+        public void Inject(IGameState state, IGridService grid)
         {
             _gameState           = state;
+            _grid                = grid;
             _gameState.OnChanged += OnStateChanged;
+            if (_renderer != null && _grid != null)
+                _renderer.SetGridService(_grid);
         }
 
         public void Initialize() => ApplyColor();
