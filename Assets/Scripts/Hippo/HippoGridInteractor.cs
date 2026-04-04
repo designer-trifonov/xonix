@@ -31,6 +31,7 @@ namespace HippoGame.Hippo
 
         public event Action OnZoneFilled;
         public event Action OnHit;
+        public event Action<Vector3> OnDrawingStarted;
 
         public void Inject(IGridService grid, IFillService fill, ITrailService trail,
             Transform hippoTransform, IMovementBehaviour movement,
@@ -138,6 +139,8 @@ namespace HippoGame.Hippo
                 if (!isEdge && state == CellState.Empty && !_hitInProgress)
                 {
                     _isDrawing = true;
+                    Vector2 sw = _grid.CellToWorld(_segmentStartCell);
+                    OnDrawingStarted?.Invoke(new Vector3(sw.x, sw.y, -1f));
                     _logger?.Log("[TRAIL CLEAR] причина: начало нового рисования");
                     _trail.Clear();
                     // Добавляем стартовую (edge) клетку в trail для непрерывности

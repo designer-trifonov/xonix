@@ -18,8 +18,9 @@ namespace HippoGame.Core
         private IBoundaryService     _boundary;
         private IAdService           _adService;
 
-        private bool  _levelTransitionPending;
-        private float _lastFillPct;
+        private bool   _levelTransitionPending;
+        private float  _lastFillPct;
+        private Action _respawnAction;
 
         public event Action OnGameOver;
 
@@ -104,14 +105,16 @@ namespace HippoGame.Core
             StartLevel();
         }
 
+        public void SetRespawnAction(Action respawn) => _respawnAction = respawn;
+
         public void ContinueAfterAd()
         {
             Debug.Log("[LevelManager] ContinueAfterAd — показываем rewarded");
             _adService?.ShowRewarded("continue", () =>
             {
-                Debug.Log("[LevelManager] Rewarded выдана — восстановление жизней");
+                Debug.Log("[LevelManager] Rewarded выдана — восстановление жизней + телепорт");
                 _gameState.RestoreLives();
-                StartLevel();
+                _respawnAction?.Invoke();
             });
         }
 

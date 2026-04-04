@@ -7,6 +7,7 @@ namespace HippoGame.Interfaces
     {
         event Action OnZoneFilled;
         event Action OnHit;
+        event Action<Vector3> OnDrawingStarted;
         void ResetState(Vector3 hippoPosition);
     }
 }
