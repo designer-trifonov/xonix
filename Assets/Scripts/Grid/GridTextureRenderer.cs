@@ -15,7 +15,10 @@ namespace HippoGame.Grid
         private int       _columns;
         private int       _rows;
 
-        private static readonly Color BorderColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+        private static readonly Color BorderColor    = new Color(0.85f, 0.85f, 0.85f, 1f);
+        private static readonly Color DefaultFill   = new Color(0.20f, 0.60f, 1.00f);
+
+        private Color _currentFillColor = DefaultFill;
 
         public void Setup(int columns, int rows, Rect bounds)
         {
@@ -74,11 +77,13 @@ namespace HippoGame.Grid
             };
         }
 
+        public void SetFillColor(Color color) => _currentFillColor = color;
+
         private Color FillColor(int x, int y)
         {
-            if (_fillTexture == null || !_fillTexture.isReadable)
-                return new Color(0.2f, 0.6f, 1f);
-            return _fillTexture.GetPixelBilinear((float)x / _columns, (float)y / _rows);
+            if (_fillTexture != null && _fillTexture.isReadable)
+                return _fillTexture.GetPixelBilinear((float)x / _columns, (float)y / _rows);
+            return _currentFillColor;
         }
     }
 }
