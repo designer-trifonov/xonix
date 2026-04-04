@@ -138,11 +138,11 @@ namespace HippoGame.Hippo
             {
                 if (!isEdge && state == CellState.Empty && !_hitInProgress)
                 {
+                    _logger?.Log("[TRAIL CLEAR] причина: начало нового рисования");
+                    _trail.Clear();
                     _isDrawing = true;
                     Vector2 sw = _grid.CellToWorld(_segmentStartCell);
                     OnDrawingStarted?.Invoke(new Vector3(sw.x, sw.y, -1f));
-                    _logger?.Log("[TRAIL CLEAR] причина: начало нового рисования");
-                    _trail.Clear();
                     // Добавляем стартовую (edge) клетку в trail для непрерывности
                     if (_grid.IsEdge(_segmentStartCell))
                         _trail.AddPoint(_segmentStartCell);
@@ -170,8 +170,8 @@ namespace HippoGame.Hippo
 
             if (_isDrawing && pts.Count > 0)
             {
-                Vector2 a = _grid.CellToWorld(_segmentStartCell);
-                Vector2 b = _hippoTransform.position;
+                Vector2 a = _grid.CellToWorld(pts[pts.Count - 1]);
+                Vector2 b = _grid.CellToWorld(_lastCell);
                 if (SegmentDist(pos, a, b) < threshold)
                     return true;
             }
@@ -207,8 +207,11 @@ namespace HippoGame.Hippo
 
         private static float SegmentDist(Vector2 p, Vector2 a, Vector2 b)
         {
-            Vector2 ab = b - a, ap = p - a;
-            float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / ab.sqrMagnitude);
+            Vector2 ab = b - a;
+            float sqrLen = ab.sqrMagnitude;
+            if (sqrLen < 1e-6f) return (p - a).magnitude;
+            Vector2 ap = p - a;
+            float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / sqrLen);
             return (p - (a + t * ab)).magnitude;
         }
     }
