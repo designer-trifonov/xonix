@@ -52,7 +52,7 @@ namespace HippoGame.Core
             container.Register<IGameState>(gameState);
             container.Register<IBoundaryService>(_gameZone);
             container.Register<IAdService>(_adController);
-            container.Register<IInputProvider>(new KeyboardInputProvider());
+            container.Register<IInputProvider>(new CombinedInputProvider());
             container.Register<HippoController>(_hippoController);
             container.Register<IGridService>(_gameGrid);
             container.Register<IGridRenderer>(_gameGrid);
@@ -142,7 +142,7 @@ namespace HippoGame.Core
             if (_hippoRespawnHandler    != null) _gameStartController.RegisterInit(_hippoRespawnHandler.Initialize);
             if (_levelColorController   != null)
             {
-                _levelColorController.Inject(container.Resolve<IGameState>(), container.Resolve<IGridService>());
+                _levelColorController.Inject(container.Resolve<IGameState>());
                 _gameStartController.RegisterInit(_levelColorController.Initialize);
             }
             _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);
