@@ -28,6 +28,8 @@ namespace HippoGame.Ads
         public event Action OnRewardedClose;
         public event Action OnRewardedError;
 
+        private bool _interstitialClosedFired;
+
         private void OnEnable()
         {
 #if YandexGamesPlatform_yg
@@ -55,10 +57,17 @@ namespace HippoGame.Ads
         }
 
 #if YandexGamesPlatform_yg
-        private void OnInterOpen()              { Debug.Log("[AdController] Interstitial ОТКРЫТА"); }
-        private void OnInterClose()             { Debug.Log("[AdController] Interstitial ЗАКРЫТА"); OnInterstitialClosed?.Invoke(); }
-        private void OnInterWasShow(bool shown) { Debug.Log($"[AdController] Interstitial показана: {shown}"); }
-        private void OnInterError()             { Debug.Log("[AdController] Interstitial ОШИБКА"); }
+        private void OnInterOpen()              { Debug.Log("[AdController] Interstitial ОТКРЫТА"); _interstitialClosedFired = false; }
+        private void OnInterClose()             { Debug.Log("[AdController] Interstitial ЗАКРЫТА"); FireInterstitialClosed(); }
+        private void OnInterWasShow(bool shown) { Debug.Log($"[AdController] Interstitial показана: {shown}"); FireInterstitialClosed(); }
+        private void OnInterError()             { Debug.Log("[AdController] Interstitial ОШИБКА");  FireInterstitialClosed(); }
+
+        private void FireInterstitialClosed()
+        {
+            if (_interstitialClosedFired) return;
+            _interstitialClosedFired = true;
+            OnInterstitialClosed?.Invoke();
+        }
 
         private void OnRewardOpen()  { Debug.Log("[AdController] Rewarded ОТКРЫТА");  OnRewardedOpen?.Invoke(); }
         private void OnRewardClose() { Debug.Log("[AdController] Rewarded ЗАКРЫТА"); OnRewardedClose?.Invoke(); }
