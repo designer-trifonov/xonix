@@ -23,6 +23,7 @@ namespace HippoGame.Ads
             }
         }
 
+        public event Action OnInterstitialClosed;
         public event Action OnRewardedOpen;
         public event Action OnRewardedClose;
         public event Action OnRewardedError;
@@ -55,7 +56,7 @@ namespace HippoGame.Ads
 
 #if YandexGamesPlatform_yg
         private void OnInterOpen()              { Debug.Log("[AdController] Interstitial ОТКРЫТА"); }
-        private void OnInterClose()             { Debug.Log("[AdController] Interstitial ЗАКРЫТА"); }
+        private void OnInterClose()             { Debug.Log("[AdController] Interstitial ЗАКРЫТА"); OnInterstitialClosed?.Invoke(); }
         private void OnInterWasShow(bool shown) { Debug.Log($"[AdController] Interstitial показана: {shown}"); }
         private void OnInterError()             { Debug.Log("[AdController] Interstitial ОШИБКА"); }
 
@@ -72,6 +73,7 @@ namespace HippoGame.Ads
             YG2.optionalPlatform.FirstInterAdvShow();
 #else
             Debug.Log("[AdController] ShowInterstitial (stub — YG не установлен)");
+            OnInterstitialClosed?.Invoke();
 #endif
         }
 

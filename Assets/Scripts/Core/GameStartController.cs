@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using HippoGame.UI;
 using HippoGame.Interfaces;
-using HippoGame.Core;
 
 namespace HippoGame.Core
 {
@@ -16,13 +15,11 @@ namespace HippoGame.Core
         [SerializeField] private GameObject[]                _hideUntilStart;
 
         private readonly List<Action> _initCallbacks = new();
-        private IAdService  _adService;
-        private IGameState  _gameState;
+        private IGameState _gameState;
 
-        public void Inject(IAdService adService, IGameState gameState)
+        public void Inject(IGameState gameState)
         {
-            _adService  = adService;
-            _gameState  = gameState;
+            _gameState = gameState;
         }
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
@@ -30,7 +27,10 @@ namespace HippoGame.Core
         private void Start()
         {
             SetVisible(false);
+        }
 
+        public void BeginFlow()
+        {
             if (_rulesPopup != null)
             {
                 _rulesPopup.OnClose += OnRulesClosed;
@@ -61,7 +61,6 @@ namespace HippoGame.Core
         private void OnDifficultyChosen(Difficulty d)
         {
             _gameState?.SetDifficulty(d);
-            _adService?.ShowInterstitial();
             SetVisible(true);
             foreach (var cb in _initCallbacks)
                 cb?.Invoke();

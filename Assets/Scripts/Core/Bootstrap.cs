@@ -27,6 +27,7 @@ namespace HippoGame.Core
         [SerializeField] private BallSpawner           _ballSpawner;
         [SerializeField] private AdController          _adController;
         [SerializeField] private GameStartController   _gameStartController;
+        [SerializeField] private GameStartAdHandler    _gameStartAdHandler;
         [SerializeField] private HippoRespawnHandler   _hippoRespawnHandler;
         [SerializeField] private LevelColorController  _levelColorController;
 
@@ -83,6 +84,7 @@ namespace HippoGame.Core
             var grid         = container.Resolve<IGridService>();
             var levelManager = container.Resolve<LevelManager>();
 
+            // ── Inject ───────────────────────────────────────────────────────────
             _hippoController.Inject(
                 container.Resolve<IInputProvider>(),
                 container.Resolve<IMovementBehaviour>(),
@@ -97,20 +99,15 @@ namespace HippoGame.Core
                 container.Resolve<ITrailService>(),
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
-                _particleEffects != null ? container.Resolve<IParticleService>() : null,
+                container.Resolve<IParticleService>(),
                 container.Resolve<IBallSpawner>(),
                 container.Resolve<IGameLogger>());
 
-            _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
-            if (_hippoRespawnHandler != null)
-                levelManager.SetRespawnAction(_hippoRespawnHandler.Respawn);
-
-            if (_ballSpawner != null)
-                _ballSpawner.Inject(
-                    grid,
-                    container.Resolve<IBoundaryService>(),
-                    _hippoController.transform,
-                    container.Resolve<IBallInteractable>());
+            _ballSpawner.Inject(
+                grid,
+                container.Resolve<IBoundaryService>(),
+                _hippoController.transform,
+                container.Resolve<IBallInteractable>());
 
             levelManager.Inject(
                 container.Resolve<IGameState>(),
@@ -122,35 +119,42 @@ namespace HippoGame.Core
                 container.Resolve<IBoundaryService>(),
                 container.Resolve<IAdService>());
 
-            if (_livesUI   != null) _livesUI.Inject(state);
-            if (_scoreUI   != null) _scoreUI.Inject(state);
-            if (_levelUI   != null) _levelUI.Inject(state);
-            if (_percentUI != null) _percentUI.Inject(state, grid);
-            if (_shopUI    != null) _shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>());
+            _hippoRespawnHandler.Inject(
+                container.Resolve<IHippoGridInteractor>(),
+                container.Resolve<IHippoController>(),
+                _hippoController.transform);
+            levelManager.SetRespawnAction(_hippoRespawnHandler.Respawn);
 
-            if (_gameOverUI != null)
-            {
-                _gameOverUI.Inject(container.Resolve<IPauseService>());
-                levelManager.OnGameOver += _gameOverUI.Show;
-                _gameOverUI.OnRestart   += levelManager.RestartFromLevel1;
-                _gameOverUI.OnWatchAd   += levelManager.ContinueAfterAd;
-            }
+            _levelColorController.Inject(container.Resolve<IGameState>());
 
-            _gameStartController.Inject(container.Resolve<IAdService>(), container.Resolve<IGameState>());
+            _livesUI.Inject(state);
+            _scoreUI.Inject(state);
+            _levelUI.Inject(state);
+            _percentUI.Inject(state, grid);
+            _shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>());
+
+            _gameOverUI.Inject(container.Resolve<IPauseService>());
+            levelManager.OnGameOver      += _gameOverUI.Show;
+            _gameOverUI.OnRestart        += levelManager.RestartFromLevel1;
+            _gameOverUI.OnWatchAd        += levelManager.ContinueAfterAd;
+
+            _gameStartController.Inject(container.Resolve<IGameState>());
+            _gameStartAdHandler.Inject(container.Resolve<IAdService>());
+            _gameStartAdHandler.OnCompleted += _gameStartController.BeginFlow;
+
+            _hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
+
+            // ── Initialize (строго по порядку) ───────────────────────────────────
             _gameStartController.RegisterInit(_gameGrid.Initialize);
-            _gameStartController.RegisterInit(container.Resolve<HippoController>().Initialize);
-            if (_hippoRespawnHandler    != null) _gameStartController.RegisterInit(_hippoRespawnHandler.Initialize);
-            if (_levelColorController   != null)
-            {
-                _levelColorController.Inject(container.Resolve<IGameState>());
-                _gameStartController.RegisterInit(_levelColorController.Initialize);
-            }
-            _gameStartController.RegisterInit(container.Resolve<HippoGridInteractor>().Initialize);
+            _gameStartController.RegisterInit(_hippoController.Initialize);
+            _gameStartController.RegisterInit(_hippoRespawnHandler.Initialize);
+            _gameStartController.RegisterInit(_levelColorController.Initialize);
+            _gameStartController.RegisterInit(_hippoGridInteractor.Initialize);
             _gameStartController.RegisterInit(levelManager.Initialize);
-            if (_livesUI   != null) _gameStartController.RegisterInit(_livesUI.Initialize);
-            if (_scoreUI   != null) _gameStartController.RegisterInit(_scoreUI.Initialize);
-            if (_levelUI   != null) _gameStartController.RegisterInit(_levelUI.Initialize);
-            if (_percentUI != null) _gameStartController.RegisterInit(_percentUI.Initialize);
+            _gameStartController.RegisterInit(_livesUI.Initialize);
+            _gameStartController.RegisterInit(_scoreUI.Initialize);
+            _gameStartController.RegisterInit(_levelUI.Initialize);
+            _gameStartController.RegisterInit(_percentUI.Initialize);
         }
 
     }

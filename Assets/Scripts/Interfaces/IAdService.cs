@@ -6,6 +6,7 @@ namespace HippoGame.Interfaces
     {
         bool IsAdShowing { get; }
 
+        event Action OnInterstitialClosed;
         event Action OnRewardedOpen;
         event Action OnRewardedClose;
         event Action OnRewardedError;
