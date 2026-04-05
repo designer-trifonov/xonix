@@ -23,5 +23,11 @@ namespace HippoGame.Core
             Debug.LogError($"[DiContainer] Тип не зарегистрирован: {type.Name}");
             throw new InvalidOperationException($"[DiContainer] Тип не зарегистрирован: {type.Name}");
         }
+
+        public T TryResolve<T>() where T : class
+        {
+            _bindings.TryGetValue(typeof(T), out object instance);
+            return instance as T;
+        }
     }
 }

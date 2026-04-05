@@ -41,41 +41,16 @@ namespace HippoGame.Core
 
         private void Awake()
         {
-            var container = BuildContainer();
+            var container = GameContainer.Build(
+                _levelConfig,
+                _gameZone,
+                _hippoController,
+                _gameGrid,
+                _hippoGridInteractor,
+                _particleEffects,
+                _ballSpawner,
+                _adController);
             Inject(container);
-        }
-
-        private DiContainer BuildContainer()
-        {
-            var container = new DiContainer();
-            var gameState = new GameState(_levelConfig);
-            container.Register<GameState>(gameState);
-            container.Register<IGameState>(gameState);
-            container.Register<IBoundaryService>(_gameZone);
-            container.Register<IAdService>(_adController);
-            container.Register<IInputProvider>(new CombinedInputProvider());
-            container.Register<HippoController>(_hippoController);
-            container.Register<IGridService>(_gameGrid);
-            container.Register<IGridRenderer>(_gameGrid);
-            var movement = new CellMovement(container.Resolve<IGridService>());
-            container.Register<CellMovement>(movement);
-            container.Register<IMovementBehaviour>(movement);
-            container.Register<IFillService>(new FloodFillService());
-            var grid = container.Resolve<IGridService>();
-            container.Register<ICollisionService>(new DrawingAwareCollisionService(
-                _hippoGridInteractor, grid, new CellCollisionService(grid)));
-            container.Register<IHippoController>(_hippoController);
-            container.Register<IHippoGridInteractor>(_hippoGridInteractor);
-            container.Register<ITrailService>(new TrailTracker());
-            container.Register<IBallSpawner>(_ballSpawner);
-            container.Register<IBallInteractable>(_hippoGridInteractor);
-            if (_particleEffects != null)
-                container.Register<IParticleService>(_particleEffects);
-            container.Register<HippoGridInteractor>(_hippoGridInteractor);
-            container.Register<LevelManager>(new LevelManager());
-            container.Register<IGameLogger>(new GameLogger());
-            container.Register<IPauseService>(new PauseService());
-            return container;
         }
 
         private void Inject(DiContainer container)
@@ -99,7 +74,7 @@ namespace HippoGame.Core
                 container.Resolve<ITrailService>(),
                 _hippoController.transform,
                 container.Resolve<IMovementBehaviour>(),
-                container.Resolve<IParticleService>(),
+                container.TryResolve<IParticleService>(),
                 container.Resolve<IBallSpawner>(),
                 container.Resolve<IGameLogger>());
 
