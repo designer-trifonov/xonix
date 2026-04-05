@@ -36,6 +36,7 @@ namespace HippoGame.Core
             container.Register<IInputProvider>(new CombinedInputProvider());
             container.Register<HippoController>(hippoController);
             container.Register<IHippoController>(hippoController);
+            container.Register<GameGrid>(gameGrid);
             container.Register<IGridService>(gameGrid);
             container.Register<IGridRenderer>(gameGrid);
 
