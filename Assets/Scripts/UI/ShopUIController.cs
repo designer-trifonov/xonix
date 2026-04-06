@@ -21,6 +21,7 @@ namespace HippoGame.UI
         private IAdService    _adService;
         private IPauseService _pause;
         private bool          _adInProgress;
+        private bool          _isOpen;
 
         public void Inject(IGameState gameState, IBallSpawner ballSpawner, IAdService adService, IPauseService pause)
         {
@@ -43,12 +44,13 @@ namespace HippoGame.UI
 
         private void ToggleShop()
         {
-            if (_shopPanel.activeSelf) CloseShop();
-            else                       OpenShop();
+            if (_isOpen) CloseShop();
+            else         OpenShop();
         }
 
         private void OpenShop()
         {
+            _isOpen = true;
             _shopPanel.SetActive(true);
             _pause?.Pause();
             _ballSpawner.SetBallsVisible(false);
@@ -56,6 +58,7 @@ namespace HippoGame.UI
 
         private void CloseShop()
         {
+            _isOpen = false;
             _shopPanel.SetActive(false);
             _pause?.Resume();
             _ballSpawner.SetBallsVisible(true);
