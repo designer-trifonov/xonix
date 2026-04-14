@@ -23,6 +23,8 @@ namespace HippoGame.Core
         private Action _respawnAction;
 
         public event Action OnGameOver;
+        public event Action OnLevelComplete;
+        public event Action OnLevelStarted;
 
         public void Inject(IGameState state, IGridService grid,
             IBallSpawner spawner, IHippoController hippo,
@@ -57,6 +59,7 @@ namespace HippoGame.Core
             else
                 Debug.LogWarning("[LevelManager] IBallSpawner == null — шары не созданы");
 
+            OnLevelStarted?.Invoke();
             Debug.Log($"[LevelManager] Уровень {_gameState.Level} старт | скорость гиппо={_gameState.HippoSpeed:F1} шары={_gameState.BallCount} цель={_gameState.RequiredFillPercent:F0}%");
         }
 
@@ -82,6 +85,7 @@ namespace HippoGame.Core
             _levelTransitionPending = true;
 
             Debug.Log($"[LevelManager] Уровень {_gameState.Level} завершён!");
+            OnLevelComplete?.Invoke();
             _gameState.NextLevel();
             ResetField();
             _levelTransitionPending = false;
@@ -124,10 +128,9 @@ namespace HippoGame.Core
             _lastFillPct = 0f;
             _grid.ResetCells();
 
-            // Snap к ячейке сетки — как PlaceAtSpawn
-            Vector3    raw     = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
-            Vector2Int cell    = _grid.WorldToCell(raw);
-            Vector2    snapped = _grid.CellToWorld(cell);
+            Vector3    raw      = new Vector3(0f, _boundary.GetBounds().yMax, 0f);
+            Vector2Int cell     = _grid.WorldToCell(raw);
+            Vector2    snapped  = _grid.CellToWorld(cell);
             Vector3    spawnPos = new Vector3(snapped.x, snapped.y, -1f);
 
             _hippo.SetPosition(spawnPos);
@@ -136,6 +139,5 @@ namespace HippoGame.Core
 
             _ballSpawner?.ClearBalls();
         }
-
     }
 }

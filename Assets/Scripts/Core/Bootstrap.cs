@@ -6,6 +6,7 @@ using HippoGame.Ball;
 using HippoGame.UI;
 using HippoGame.FX;
 using HippoGame.Ads;
+using HippoGame.Audio;
 
 namespace HippoGame.Core
 {
@@ -26,6 +27,7 @@ namespace HippoGame.Core
         [SerializeField] private GameStartAdHandler     _gameStartAdHandler;
         [SerializeField] private HippoRespawnHandler    _hippoRespawnHandler;
         [SerializeField] private LevelColorController   _levelColorController;
+        [SerializeField] private AudioService           _audioService;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -34,6 +36,7 @@ namespace HippoGame.Core
         [SerializeField] private FillPercentUIController _percentUI;
         [SerializeField] private GameOverUIController    _gameOverUI;
         [SerializeField] private ShopUIController        _shopUI;
+        [SerializeField] private LeaderboardUIController _leaderboardUI;
 
         private void Awake()
         {
@@ -47,7 +50,8 @@ namespace HippoGame.Core
                 _hippoRespawnHandler, _levelColorController,
                 _livesUI, _scoreUI, _levelUI, _percentUI,
                 _gameOverUI, _shopUI,
-                _gameStartController, _gameStartAdHandler);
+                _gameStartController, _gameStartAdHandler,
+                _leaderboardUI, _audioService);
         }
     }
 }

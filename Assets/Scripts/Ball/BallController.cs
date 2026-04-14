@@ -10,6 +10,11 @@ namespace HippoGame.Ball
         public bool    IsAlive  => _active;
         public Vector3 Position => transform.position;
 
+        public event System.Action OnBounce;
+
+        private float _bounceCooldown;
+        private const float BounceCooldownTime = 0.1f;
+
         public void Kill()
         {
             _active = false;
@@ -53,16 +58,22 @@ namespace HippoGame.Ball
             Vector2 pos  = transform.position;
             Vector2 next = pos + _direction * _speed * Time.deltaTime;
 
+            _bounceCooldown -= Time.deltaTime;
+
+            bool bounced = false;
             if (next.x <= _bounds.xMin || next.x >= _bounds.xMax)
             {
                 _direction.x = -_direction.x;
                 next.x = Mathf.Clamp(next.x, _bounds.xMin, _bounds.xMax);
+                bounced = true;
             }
             if (next.y <= _bounds.yMin || next.y >= _bounds.yMax)
             {
                 _direction.y = -_direction.y;
                 next.y = Mathf.Clamp(next.y, _bounds.yMin, _bounds.yMax);
+                bounced = true;
             }
+            if (bounced) FireBounce();
 
             BounceOffFilled(pos, ref next);
 
@@ -99,6 +110,15 @@ namespace HippoGame.Ball
             if (xFilled) { _direction.x = -_direction.x; to.x = from.x; }
             if (yFilled) { _direction.y = -_direction.y; to.y = from.y; }
             if (!xFilled && !yFilled) { _direction = -_direction; to = from; }
+
+            FireBounce();
+        }
+
+        private void FireBounce()
+        {
+            if (_bounceCooldown > 0f) return;
+            _bounceCooldown = BounceCooldownTime;
+            OnBounce?.Invoke();
         }
     }
 }

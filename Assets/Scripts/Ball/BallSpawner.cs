@@ -10,6 +10,8 @@ namespace HippoGame.Ball
     {
         [SerializeField] private GameObject _ballPrefab;
 
+        public event System.Action OnAnyBallBounce;
+
         private BallPool               _pool;
         private readonly List<IBallController> _balls = new();
 
@@ -49,6 +51,7 @@ namespace HippoGame.Ball
                 float dx = Random.value > 0.5f ? 1f : -1f;
                 float dy = Random.value > 0.5f ? 1f : -1f;
                 ball.Init(new Vector2(dx, dy).normalized, speed, bounds, _grid, _hippo, _interactable);
+                ball.OnBounce += ForwardBounce;
 
                 ball.gameObject.SetActive(true);
                 _balls.Add(ball);
@@ -123,9 +126,14 @@ namespace HippoGame.Ball
         {
             Debug.Log($"[BallSpawner] ClearBalls: возвращаем {_balls.Count} шаров в пул");
             foreach (var b in _balls)
+            {
+                if (b is BallController bc) bc.OnBounce -= ForwardBounce;
                 if (b.IsAlive) b.Kill();
+            }
             _balls.Clear();
         }
+
+        private void ForwardBounce() => OnAnyBallBounce?.Invoke();
 
         private Vector2 RandomInteriorPos(Rect bounds)
         {

@@ -1,10 +1,12 @@
 using UnityEngine;
+using YG;
 using HippoGame.Interfaces;
 using HippoGame.Grid;
 using HippoGame.Hippo;
 using HippoGame.Ball;
 using HippoGame.UI;
 using HippoGame.Ads;
+using HippoGame.Audio;
 
 namespace HippoGame.Core
 {
@@ -24,7 +26,9 @@ namespace HippoGame.Core
             GameOverUIController    gameOverUI,
             ShopUIController        shopUI,
             GameStartController     gameStartController,
-            GameStartAdHandler      gameStartAdHandler)
+            GameStartAdHandler      gameStartAdHandler,
+            LeaderboardUIController leaderboardUI,
+            AudioService            audioService = null)
         {
             var state        = container.Resolve<GameState>();
             var grid         = container.Resolve<IGridService>();
@@ -78,8 +82,11 @@ namespace HippoGame.Core
             percentUI.Inject(state, grid);
             shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>());
 
+            leaderboardUI.Inject(state);
+
             gameOverUI.Inject(container.Resolve<IPauseService>());
             levelManager.OnGameOver   += gameOverUI.Show;
+            levelManager.OnGameOver   += leaderboardUI.Show;
             gameOverUI.OnRestart      += levelManager.RestartFromLevel1;
             gameOverUI.OnWatchAd      += levelManager.ContinueAfterAd;
 
@@ -88,6 +95,9 @@ namespace HippoGame.Core
             gameStartAdHandler.OnCompleted += gameStartController.BeginFlow;
 
             hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
+
+            if (audioService != null)
+                audioService.Initialize(levelManager, ballSpawner, hippoGridInteractor);
 
             gameStartController.RegisterInit(container.Resolve<GameGrid>().Initialize);
             gameStartController.RegisterInit(hippoController.Initialize);
@@ -99,6 +109,7 @@ namespace HippoGame.Core
             gameStartController.RegisterInit(scoreUI.Initialize);
             gameStartController.RegisterInit(levelUI.Initialize);
             gameStartController.RegisterInit(percentUI.Initialize);
+            gameStartController.RegisterInit(leaderboardUI.Initialize);
         }
     }
 }
