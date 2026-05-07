@@ -94,11 +94,6 @@ namespace HippoGame.Ball
             for (int i = _balls.Count - 1; i >= 0; i--)
             {
                 if (!_balls[i].IsAlive) continue;
-                if (_balls.Count <= 1)
-                {
-                    Debug.Log("[BallSpawner] RemoveOneBall: защита — минимум 1 шар");
-                    return false;
-                }
                 _balls[i].Kill();
                 _balls.RemoveAt(i);
                 Debug.Log($"[BallSpawner] RemoveOneBall: шар возвращён в пул, осталось={_balls.Count}");
