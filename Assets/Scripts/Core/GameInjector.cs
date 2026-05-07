@@ -108,17 +108,6 @@ namespace HippoGame.Core
                 saver.Inject(container.Resolve<IGameState>(), container.Resolve<IGridService>(), levelManager);
 
             gameStartController.Inject(container.Resolve<IGameState>(), saver);
-            gameStartController.SetMainMenuAction(() =>
-            {
-                saver?.ClearSave();
-                levelManager.ClearFieldVisuals();
-                gameStartController.ShowDifficultyForRestart(() =>
-                {
-                    levelManager.RestartFromLevel1();
-                    saver?.Activate();
-                });
-            });
-
             gameStartAdHandler.Inject(container.Resolve<IAdService>());
             gameStartAdHandler.OnCompleted += gameStartController.BeginFlow;
 
