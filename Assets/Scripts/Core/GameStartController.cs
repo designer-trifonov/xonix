@@ -10,13 +10,15 @@ namespace HippoGame.Core
     /// RulesPopup → DifficultySelect → запуск игры.
     public class GameStartController : MonoBehaviour
     {
-        [SerializeField] private RulesPopupController        _rulesPopup;
+        [SerializeField] private RulesPopupController         _rulesPopup;
         [SerializeField] private DifficultySelectUIController _difficultySelect;
-        [SerializeField] private GameObject[]                _hideUntilStart;
+        [SerializeField] private GameObject[]                 _hideUntilStart;
+        [SerializeField] private UnityEngine.UI.Button        _mainMenuButton;
 
         private readonly List<Action> _initCallbacks = new();
-        private IGameState      _gameState;
+        private IGameState       _gameState;
         private GameSessionSaver _saver;
+        private Action           _mainMenuAction;
 
         public void Inject(IGameState gameState, GameSessionSaver saver = null)
         {
@@ -25,6 +27,13 @@ namespace HippoGame.Core
         }
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
+
+        public void SetMainMenuAction(Action action)
+        {
+            _mainMenuAction = action;
+            if (_mainMenuButton != null)
+                _mainMenuButton.onClick.AddListener(() => _mainMenuAction?.Invoke());
+        }
 
         private void Start()
         {
