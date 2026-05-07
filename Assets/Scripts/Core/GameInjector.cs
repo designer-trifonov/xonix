@@ -28,7 +28,8 @@ namespace HippoGame.Core
             GameStartController     gameStartController,
             GameStartAdHandler      gameStartAdHandler,
             LeaderboardUIController leaderboardUI,
-            AudioService            audioService = null)
+            AudioService            audioService = null,
+            GameSessionSaver        saver        = null)
         {
             var state        = container.Resolve<GameState>();
             var grid         = container.Resolve<IGridService>();
@@ -80,17 +81,33 @@ namespace HippoGame.Core
             scoreUI.Inject(state);
             levelUI.Inject(state);
             percentUI.Inject(state, grid);
-            shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>());
+            shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>(), container.Resolve<IGameLogger>());
 
             leaderboardUI.Inject(state);
 
             gameOverUI.Inject(container.Resolve<IPauseService>());
             levelManager.OnGameOver   += gameOverUI.Show;
             levelManager.OnGameOver   += leaderboardUI.Show;
-            gameOverUI.OnRestart      += levelManager.RestartFromLevel1;
+            levelManager.OnGameOver   += () => saver?.ClearSave();
+            gameOverUI.OnRestart      += () =>
+            {
+                gameOverUI.Hide();
+                leaderboardUI.Hide();
+                levelManager.ClearFieldVisuals();
+                gameStartController.ShowDifficultyForRestart(() =>
+                {
+                    gameOverUI.Hide();
+                    leaderboardUI.Initialize();
+                    levelManager.RestartFromLevel1();
+                    saver?.Activate();
+                });
+            };
             gameOverUI.OnWatchAd      += levelManager.ContinueAfterAd;
 
-            gameStartController.Inject(container.Resolve<IGameState>());
+            if (saver != null)
+                saver.Inject(container.Resolve<IGameState>(), container.Resolve<IGridService>(), levelManager);
+
+            gameStartController.Inject(container.Resolve<IGameState>(), saver);
             gameStartAdHandler.Inject(container.Resolve<IAdService>());
             gameStartAdHandler.OnCompleted += gameStartController.BeginFlow;
 

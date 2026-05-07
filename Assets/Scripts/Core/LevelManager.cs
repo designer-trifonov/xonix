@@ -22,6 +22,8 @@ namespace HippoGame.Core
         private float  _lastFillPct;
         private Action _respawnAction;
 
+        public float LastFillPct => _lastFillPct;
+
         public event Action OnGameOver;
         public event Action OnLevelComplete;
         public event Action OnLevelStarted;
@@ -97,17 +99,38 @@ namespace HippoGame.Core
             if (_gameState.Lives <= 0)
             {
                 Debug.Log("[LevelManager] Жизни кончились — GameOver");
+                HideGameField();
                 OnGameOver?.Invoke();
             }
+        }
+
+        private void HideGameField()
+        {
+            _ballSpawner?.SetBallsVisible(false);
+            _hippo?.SetVisible(false);
+            _interactor?.ResetState(Vector3.zero);   // очищает трейл-линию
+        }
+
+        /// Вызывается перед экраном выбора сложности при рестарте:
+        /// очищает визуал поля, не запуская уровень.
+        public void ClearFieldVisuals()
+        {
+            _lastFillPct = 0f;
+            _grid.ResetCells();
+            _ballSpawner?.ClearBalls();
+            _interactor?.ResetState(Vector3.zero);
         }
 
         public void RestartFromLevel1()
         {
             Debug.Log("[LevelManager] Рестарт с уровня 1");
+            _hippo?.SetVisible(true);
             _gameState.Reset();
             ResetField();
             StartLevel();
         }
+
+        public void RestoreLastFillPct(float pct) => _lastFillPct = pct;
 
         public void SetRespawnAction(Action respawn) => _respawnAction = respawn;
 
@@ -117,6 +140,8 @@ namespace HippoGame.Core
             _adService?.ShowRewarded("continue", () =>
             {
                 Debug.Log("[LevelManager] Rewarded выдана — восстановление жизней + телепорт");
+                _hippo?.SetVisible(true);
+                _ballSpawner?.SetBallsVisible(true);
                 _gameState.RestoreLives();
                 _respawnAction?.Invoke();
             });

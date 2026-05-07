@@ -84,5 +84,7 @@ namespace HippoGame.Grid
         }
 
         public void Refresh(IGridService grid) => _renderer?.Refresh(grid);
+
+        public void RefreshRenderer() => _renderer?.Refresh(this);
     }
 }

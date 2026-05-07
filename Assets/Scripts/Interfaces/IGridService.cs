@@ -16,5 +16,6 @@ namespace HippoGame.Interfaces
         bool IsInBounds(Vector2Int cell);
         bool IsEdge(Vector2Int cell);
         void ResetCells();
+        void RefreshRenderer();
     }
 }

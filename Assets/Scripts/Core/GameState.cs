@@ -77,5 +77,15 @@ namespace HippoGame.Core
             Debug.Log("[GameState] Reset");
             OnChanged?.Invoke();
         }
+
+        public void RestoreSession(int score, int level, int lives, Difficulty difficulty)
+        {
+            Score      = score;
+            Level      = Mathf.Max(1, level);
+            Lives      = lives;
+            Difficulty = difficulty;
+            Debug.Log($"[GameState] RestoreSession score={Score} level={Level} lives={Lives} diff={Difficulty}");
+            OnChanged?.Invoke();
+        }
     }
 }

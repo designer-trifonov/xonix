@@ -28,6 +28,7 @@ namespace HippoGame.Core
         [SerializeField] private HippoRespawnHandler    _hippoRespawnHandler;
         [SerializeField] private LevelColorController   _levelColorController;
         [SerializeField] private AudioService           _audioService;
+        [SerializeField] private GameSessionSaver       _saver;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -51,7 +52,7 @@ namespace HippoGame.Core
                 _livesUI, _scoreUI, _levelUI, _percentUI,
                 _gameOverUI, _shopUI,
                 _gameStartController, _gameStartAdHandler,
-                _leaderboardUI, _audioService);
+                _leaderboardUI, _audioService, _saver);
         }
     }
 }

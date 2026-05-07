@@ -23,5 +23,6 @@ namespace HippoGame.Interfaces
         void NextLevel();
         void RestoreLives();
         void Reset();
+        void RestoreSession(int score, int level, int lives, Difficulty difficulty);
     }
 }
