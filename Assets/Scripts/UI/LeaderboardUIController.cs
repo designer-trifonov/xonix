@@ -14,6 +14,7 @@ namespace HippoGame.UI
         private const string LB_NAME        = "RatingTable";
         private const int    QUANTITY_TOP    = 9;
         private const int    QUANTITY_AROUND = 0;
+        private const string KEY_BEST_SCORE  = "hp_best_score";
 
         private IGameState _gameState;
         private int        _pendingScore;
@@ -58,13 +59,35 @@ namespace HippoGame.UI
             _isGameOver   = true;
             _pendingScore = _gameState?.Score ?? 0;
 
-            // Всегда отправляем — YG2 сам оставит только если выше предыдущего
-            YG2.SetLeaderboard(LB_NAME, _pendingScore);
-            Debug.Log($"[Leaderboard] Отправили счёт {_pendingScore}, ждём таблицу...");
+            if (SaveBestScoreLocally(_pendingScore))
+            {
+                YG2.SetLeaderboard(LB_NAME, _pendingScore);
+                Debug.Log($"[Leaderboard] Новый рекорд {_pendingScore} — отправили в таблицу");
+            }
+            else
+            {
+                Debug.Log($"[Leaderboard] Счёт {_pendingScore} не лучше рекорда — не отправляем");
+            }
 
             ClearSlots();
             YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
         }
+
+        // Возвращает true если новый счёт лучше сохранённого
+        private bool SaveBestScoreLocally(int score)
+        {
+            int saved = YG2.iPlatform.GetInt(KEY_BEST_SCORE, 0);
+            if (score > saved)
+            {
+                YG2.iPlatform.SetInt(KEY_BEST_SCORE, score);
+                if (YG2.player.auth)
+                    YG2.SaveProgress();
+                return true;
+            }
+            return false;
+        }
+
+        private int GetBestScoreLocally() => YG2.iPlatform.GetInt(KEY_BEST_SCORE, 0);
 
         public void Hide()
         {
@@ -102,11 +125,12 @@ namespace HippoGame.UI
         // Всегда добавляем слот игрока последним (10-е место визуально)
         private void AppendPlayerSlot()
         {
-            string name  = YG2.player.name;
-            int    score = _isGameOver ? _pendingScore : (_gameState?.Score ?? 0);
+            string name        = YG2.player.name;
+            int    currentScore = _isGameOver ? _pendingScore : (_gameState?.Score ?? 0);
+            int    score       = Mathf.Max(currentScore, GetBestScoreLocally());
 
             var slot = Instantiate(_slotPrefab, _slotsContainer);
-            slot.Setup(0, name, score);   // rank=0 — позиция вне топа, "Вы"
+            slot.Setup(0, name, score);
             Debug.Log($"[Leaderboard] Добавлен слот игрока: {name} | {score}");
         }
 
