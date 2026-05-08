@@ -61,6 +61,13 @@ namespace HippoGame.Core
             YG2.saves.savedDifficulty  = (int)_gameState.Difficulty;
             YG2.saves.savedLastFillPct = _levelManager.LastFillPct;
             YG2.saves.savedGridCells   = SerializeGrid();
+
+            if (!YG2.player.auth)
+            {
+                Debug.Log("[GameSessionSaver] Игрок не авторизован — SaveProgress пропущен");
+                return;
+            }
+
             YG2.SaveProgress();
             Debug.Log($"[GameSessionSaver] Сохранено: score={_gameState.Score} level={_gameState.Level} lives={_gameState.Lives}");
         }
@@ -70,7 +77,8 @@ namespace HippoGame.Core
             Deactivate();
             YG2.saves.savedLevel     = 0;
             YG2.saves.savedGridCells = "";
-            YG2.SaveProgress();
+            if (YG2.player.auth)
+                YG2.SaveProgress();
             Debug.Log("[GameSessionSaver] Сохранение сброшено");
         }
 
