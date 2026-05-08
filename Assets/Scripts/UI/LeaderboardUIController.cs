@@ -48,7 +48,8 @@ namespace HippoGame.UI
         {
             _isGameOver = false;
             _panel.SetActive(true);
-            YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
+            if (YG2.player.auth)
+                YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
         }
 
         // ─── Game Over ───────────────────────────────────────────────────
@@ -59,18 +60,26 @@ namespace HippoGame.UI
             _isGameOver   = true;
             _pendingScore = _gameState?.Score ?? 0;
 
-            if (SaveBestScoreLocally(_pendingScore))
+            if (YG2.player.auth)
             {
-                YG2.SetLeaderboard(LB_NAME, _pendingScore);
-                Debug.Log($"[Leaderboard] Новый рекорд {_pendingScore} — отправили в таблицу");
+                if (SaveBestScoreLocally(_pendingScore))
+                {
+                    YG2.SetLeaderboard(LB_NAME, _pendingScore);
+                    Debug.Log($"[Leaderboard] Новый рекорд {_pendingScore} — отправили в таблицу");
+                }
+                else
+                {
+                    Debug.Log($"[Leaderboard] Счёт {_pendingScore} не лучше рекорда — не отправляем");
+                }
+
+                ClearSlots();
+                YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
             }
             else
             {
-                Debug.Log($"[Leaderboard] Счёт {_pendingScore} не лучше рекорда — не отправляем");
+                Debug.Log("[Leaderboard] Игрок не авторизован — таблица пропущена");
+                AppendPlayerSlot();
             }
-
-            ClearSlots();
-            YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
         }
 
         // Возвращает true если новый счёт лучше сохранённого
