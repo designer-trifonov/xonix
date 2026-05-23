@@ -128,6 +128,18 @@ namespace HippoGame.Movement
             target.position = _visual.Position;
         }
 
+        public void RestoreState(Vector2Int cell, Vector2Int direction)
+        {
+            _cell        = cell;
+            _prevCell    = cell;
+            _direction   = direction;
+            _pending     = Vector2Int.zero;
+            Stopped      = direction == Vector2Int.zero;
+            _initialized = true;
+            Vector2 w    = _grid.CellToWorld(cell);
+            _visual.Reset(new Vector3(w.x, w.y, -1f));
+        }
+
         // IMovementBehaviour — совместимость
         public void Tick(Transform t, ref Vector2Int dir, Vector2Int input, Rect b, ICollisionService _)
         {

@@ -4,6 +4,8 @@ using HippoGame.Interfaces;
 using HippoGame.Grid;
 using HippoGame.Hippo;
 using HippoGame.Ball;
+using HippoGame.Movement;
+using HippoGame.Trail;
 using HippoGame.UI;
 using HippoGame.Ads;
 using HippoGame.Audio;
@@ -13,27 +15,32 @@ namespace HippoGame.Core
     public static class GameInjector
     {
         public static void Inject(
-            DiContainer             container,
-            HippoController         hippoController,
-            HippoGridInteractor     hippoGridInteractor,
-            BallSpawner             ballSpawner,
-            HippoRespawnHandler     hippoRespawnHandler,
-            LevelColorController    levelColorController,
-            LivesUIController       livesUI,
-            ScoreUIController       scoreUI,
-            LevelUIController       levelUI,
-            FillPercentUIController percentUI,
-            GameOverUIController    gameOverUI,
-            ShopUIController        shopUI,
-            GameStartController     gameStartController,
-            GameStartAdHandler      gameStartAdHandler,
-            LeaderboardUIController leaderboardUI,
-            AudioService            audioService = null,
-            GameSessionSaver        saver        = null)
+            DiContainer              container,
+            HippoController          hippoController,
+            HippoGridInteractor      hippoGridInteractor,
+            BallSpawner              ballSpawner,
+            TrailLineRenderer        trailLineRenderer,
+            HippoRespawnHandler      hippoRespawnHandler,
+            LevelColorController     levelColorController,
+            LivesUIController        livesUI,
+            ScoreUIController        scoreUI,
+            LevelUIController        levelUI,
+            FillPercentUIController  percentUI,
+            GameOverUIController     gameOverUI,
+            ShopUIController         shopUI,
+            GameStartController      gameStartController,
+            GameStartAdHandler       gameStartAdHandler,
+            LeaderboardUIController  leaderboardUI,
+            AudioService             audioService      = null,
+            SaveManager              saveManager       = null,
+            GameSnapshotCollector    snapshotCollector = null)
         {
             var state        = container.Resolve<GameState>();
             var grid         = container.Resolve<IGridService>();
             var levelManager = container.Resolve<LevelManager>();
+            var restorer     = container.Resolve<GameRestorer>();
+
+            // ── Игровые системы ───────────────────────────────────────────────────────
 
             hippoController.Inject(
                 container.Resolve<IInputProvider>(),
@@ -51,6 +58,11 @@ namespace HippoGame.Core
                 container.Resolve<IMovementBehaviour>(),
                 container.TryResolve<IParticleService>(),
                 container.Resolve<IBallSpawner>(),
+                container.Resolve<IGameLogger>());
+
+            trailLineRenderer?.Inject(
+                hippoController.transform,
+                hippoGridInteractor,
                 container.Resolve<IGameLogger>());
 
             ballSpawner.Inject(
@@ -75,21 +87,60 @@ namespace HippoGame.Core
                 hippoController.transform);
             levelManager.SetRespawnAction(hippoRespawnHandler.Respawn);
 
-            levelColorController.Inject(container.Resolve<IGameState>());
+            // ── Сохранения ────────────────────────────────────────────────────────────
 
+            restorer.Inject(
+                grid,
+                container.Resolve<IHippoController>(),
+                container.Resolve<IMovementBehaviour>(),
+                container.Resolve<IHippoGridInteractor>(),
+                container.Resolve<ILevelManager>(),
+                container.Resolve<IBallSpawner>(),
+                container.TryResolve<ITrailRenderer>());
+
+            if (snapshotCollector != null)
+            {
+                snapshotCollector.Inject(
+                    container.Resolve<IGameState>(),
+                    grid,
+                    container.Resolve<ILevelManager>(),
+                    container.Resolve<IHippoController>(),
+                    container.Resolve<IMovementBehaviour>(),
+                    container.Resolve<IHippoGridInteractor>(),
+                    container.Resolve<ITrailService>(),
+                    container.Resolve<IBallSpawner>());
+
+                // Коллектор → SaveManager: единственная точка сохранения
+                if (saveManager != null)
+                    snapshotCollector.OnSnapshot += saveManager.Save;
+            }
+
+            // ── UI ────────────────────────────────────────────────────────────────────
+
+            levelColorController.Inject(container.Resolve<IGameState>());
             livesUI.Inject(state);
             scoreUI.Inject(state);
             levelUI.Inject(state);
             percentUI.Inject(state, grid);
-            shopUI.Inject(state, container.Resolve<IBallSpawner>(), container.Resolve<IAdService>(), container.Resolve<IPauseService>(), container.Resolve<IGameLogger>());
-
+            shopUI.Inject(state, container.Resolve<IBallSpawner>(),
+                container.Resolve<IAdService>(),
+                container.Resolve<IPauseService>(),
+                container.Resolve<IGameLogger>());
             leaderboardUI.Inject(state);
 
             gameOverUI.Inject(container.Resolve<IPauseService>());
-            levelManager.OnGameOver   += gameOverUI.Show;
-            levelManager.OnGameOver   += leaderboardUI.Show;
-            levelManager.OnGameOver   += () => saver?.ClearSave();
-            gameOverUI.OnRestart      += () =>
+
+            // ── Game Over ─────────────────────────────────────────────────────────────
+
+            levelManager.OnGameOver += gameOverUI.Show;
+            levelManager.OnGameOver += leaderboardUI.Show;
+            levelManager.OnGameOver += () =>
+            {
+                snapshotCollector?.Deactivate();
+                saveManager?.ClearSave();
+            };
+
+            gameOverUI.OnRestart += () =>
             {
                 gameOverUI.Hide();
                 leaderboardUI.Hide();
@@ -99,23 +150,27 @@ namespace HippoGame.Core
                     gameOverUI.Hide();
                     leaderboardUI.Initialize();
                     levelManager.RestartFromLevel1();
-                    saver?.Activate();
+                    snapshotCollector?.Activate();
                 });
             };
-            gameOverUI.OnWatchAd      += levelManager.ContinueAfterAd;
 
-            if (saver != null)
-                saver.Inject(container.Resolve<IGameState>(), container.Resolve<IGridService>(), levelManager);
+            gameOverUI.OnWatchAd += levelManager.ContinueAfterAd;
 
-            gameStartController.Inject(container.Resolve<IGameState>(), saver);
+            // ── Старт / главное меню ──────────────────────────────────────────────────
+
+            gameStartController.Inject(
+                container.Resolve<IGameState>(),
+                saveManager, snapshotCollector, restorer);
+
             gameStartController.SetMainMenuAction(() =>
             {
-                saver?.ClearSave();
+                snapshotCollector?.Deactivate();
+                saveManager?.ClearSave();
                 levelManager.ClearFieldVisuals();
                 gameStartController.ShowDifficultyForRestart(() =>
                 {
                     levelManager.RestartFromLevel1();
-                    saver?.Activate();
+                    snapshotCollector?.Activate();
                 });
             });
 
@@ -125,7 +180,12 @@ namespace HippoGame.Core
             hippoGridInteractor.OnHit += () => container.Resolve<IGameState>().LoseLife();
 
             if (audioService != null)
-                audioService.Initialize(levelManager, ballSpawner, hippoGridInteractor);
+                audioService.Initialize(
+                    container.Resolve<ILevelManager>(),
+                    container.Resolve<IBallSpawner>(),
+                    container.Resolve<IHippoGridInteractor>());
+
+            // ── Порядок инициализации ─────────────────────────────────────────────────
 
             gameStartController.RegisterInit(container.Resolve<GameGrid>().Initialize);
             gameStartController.RegisterInit(hippoController.Initialize);

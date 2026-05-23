@@ -8,10 +8,11 @@ namespace HippoGame.UI
 {
     public class GameOverUIController : MonoBehaviour
     {
-        [SerializeField] private GameObject _panel;
-        [SerializeField] private Button     _watchAdButton;
-        [SerializeField] private Button     _restartButton;
-        [SerializeField] private TMP_Text   _adButtonText;
+        [SerializeField] private GameObject  _panel;
+        [SerializeField] private Button      _watchAdButton;
+        [SerializeField] private Button      _restartButton;
+        [SerializeField] private TMP_Text    _adButtonText;
+        [SerializeField] private AdConfirmPopup _confirmPopup;
 
         private IPauseService _pause;
 
@@ -41,8 +42,19 @@ namespace HippoGame.UI
 
         private void OnWatchAdClicked()
         {
-            Hide();
-            OnWatchAd?.Invoke();
+            if (_confirmPopup != null)
+            {
+                _confirmPopup.Show(() =>
+                {
+                    Hide();
+                    OnWatchAd?.Invoke();
+                });
+            }
+            else
+            {
+                Hide();
+                OnWatchAd?.Invoke();
+            }
         }
 
         private void OnRestartClicked()

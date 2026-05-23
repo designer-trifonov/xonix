@@ -6,10 +6,17 @@ namespace HippoGame.Movement
 {
     public class AutoDirectionalMovement : IMovementBehaviour
     {
-        public float Speed   { get; set; } = 5f;
-        public bool  Stopped { get; private set; }
+        public float      Speed     { get; set; } = 5f;
+        public bool       Stopped   { get; private set; }
+        public Vector2Int Direction { get; private set; }
 
         public event Action<Vector2Int> OnDirectionChanged;
+
+        public void RestoreState(Vector2Int cell, Vector2Int direction)
+        {
+            Direction = direction;
+            Stopped   = direction == Vector2Int.zero;
+        }
 
         public void Stop()
         {
@@ -35,7 +42,8 @@ namespace HippoGame.Movement
                 else if (inputDirection != currentDirection)
                 {
                     currentDirection = inputDirection;
-                    Stopped = false;
+                    Direction        = currentDirection;
+                    Stopped          = false;
                     OnDirectionChanged?.Invoke(currentDirection);
                 }
                 else if (Stopped)

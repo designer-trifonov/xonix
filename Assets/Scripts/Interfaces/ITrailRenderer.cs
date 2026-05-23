@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace HippoGame.Interfaces
@@ -6,5 +7,6 @@ namespace HippoGame.Interfaces
     {
         void Inject(Transform hippo, IDrawingState drawingState = null, IGameLogger logger = null);
         void Clear();
+        void RestorePositions(IReadOnlyList<Vector3> worldPositions);
     }
 }

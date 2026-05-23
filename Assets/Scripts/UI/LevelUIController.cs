@@ -1,12 +1,15 @@
 using TMPro;
 using UnityEngine;
 using HippoGame.Interfaces;
+using YG;
 
 namespace HippoGame.UI
 {
     public class LevelUIController : MonoBehaviour, IInitializable
     {
         [SerializeField] private TMP_Text _text;
+        [SerializeField] private string   _labelRu = "Уровень";
+        [SerializeField] private string   _labelEn = "Level";
 
         private IGameState _state;
 
@@ -16,13 +19,15 @@ namespace HippoGame.UI
         {
             if (_text == null) _text = GameObject.Find("Level_Text (TMP)")?.GetComponent<TMP_Text>();
             _state.OnChanged += Refresh;
+            YG2.onSwitchLang += _ => Refresh();
             Refresh();
-            Debug.Log("[LevelUIController] Initialize");
         }
 
         private void Refresh()
         {
-            if (_text != null) _text.text = $"Уровень {_state.Level}";
+            if (_text == null) return;
+            var label = YG2.lang == "en" ? _labelEn : _labelRu;
+            _text.text = $"{label} {_state.Level}";
         }
     }
 }

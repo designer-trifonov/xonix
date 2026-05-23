@@ -79,12 +79,20 @@ namespace HippoGame.Hippo
             PlaceAtSpawn();
         }
 
+        public Vector3 Position => transform.position;
+
         public void SetPosition(Vector3 position) =>
             transform.position = new Vector3(position.x, position.y, -1f);
 
         public void ResetMovement()
         {
             _movement.Resume(transform);
+        }
+
+        public void SetVisible(bool visible)
+        {
+            var sr = GetComponent<SpriteRenderer>();
+            if (sr != null) sr.enabled = visible;
         }
 
         private void PlaceAtSpawn()

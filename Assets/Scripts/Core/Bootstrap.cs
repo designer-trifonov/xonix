@@ -3,6 +3,7 @@ using HippoGame.Zone;
 using HippoGame.Grid;
 using HippoGame.Hippo;
 using HippoGame.Ball;
+using HippoGame.Trail;
 using HippoGame.UI;
 using HippoGame.FX;
 using HippoGame.Ads;
@@ -22,13 +23,15 @@ namespace HippoGame.Core
         [SerializeField] private HippoGridInteractor    _hippoGridInteractor;
         [SerializeField] private ParticleEffectsService _particleEffects;
         [SerializeField] private BallSpawner            _ballSpawner;
+        [SerializeField] private TrailLineRenderer      _trailLineRenderer;
         [SerializeField] private AdController           _adController;
         [SerializeField] private GameStartController    _gameStartController;
         [SerializeField] private GameStartAdHandler     _gameStartAdHandler;
         [SerializeField] private HippoRespawnHandler    _hippoRespawnHandler;
         [SerializeField] private LevelColorController   _levelColorController;
-        [SerializeField] private AudioService           _audioService;
-        [SerializeField] private GameSessionSaver       _saver;
+        [SerializeField] private AudioService            _audioService;
+        [SerializeField] private SaveManager            _saveManager;
+        [SerializeField] private GameSnapshotCollector  _snapshotCollector;
 
         [Header("UI")]
         [SerializeField] private LivesUIController       _livesUI;
@@ -43,16 +46,19 @@ namespace HippoGame.Core
         {
             var container = GameContainer.Build(
                 _levelConfig, _gameZone, _hippoController, _gameGrid,
-                _hippoGridInteractor, _particleEffects, _ballSpawner, _adController);
+                _hippoGridInteractor, _particleEffects, _ballSpawner, _adController,
+                _trailLineRenderer);
 
             GameInjector.Inject(
                 container,
                 _hippoController, _hippoGridInteractor, _ballSpawner,
+                _trailLineRenderer,
                 _hippoRespawnHandler, _levelColorController,
                 _livesUI, _scoreUI, _levelUI, _percentUI,
                 _gameOverUI, _shopUI,
                 _gameStartController, _gameStartAdHandler,
-                _leaderboardUI, _audioService, _saver);
+                _leaderboardUI, _audioService,
+                _saveManager, _snapshotCollector);
         }
     }
 }

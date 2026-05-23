@@ -78,6 +78,35 @@ MonoBehaviour:
       it: []
       de: []
       hi: []
+    fontsTMP:
+      defaultFont: []
+      ru: []
+      en: []
+      tr: []
+      az: []
+      be: []
+      he: []
+      hy: []
+      ka: []
+      et: []
+      fr: []
+      kk: []
+      ky: []
+      lt: []
+      lv: []
+      ro: []
+      tg: []
+      tk: []
+      uk: []
+      uz: []
+      es: []
+      pt: []
+      ar: []
+      id: []
+      ja: []
+      it: []
+      de: []
+      hi: []
     fontsSizeCorrect:
       ru: 
       en: 
@@ -353,11 +382,11 @@ MonoBehaviour:
     minute: 30
     second: 30
   Storage:
-    saveLocal: 0
+    saveLocal: 1
     saveCloud: 1
-    flush: 0
+    flush: 1
   Basic:
-    platform: {fileID: 0}
+    platform: {fileID: 11400000, guid: 7a083b7b8e0aa514492c0527e3fb0807, type: 2}
     autoApplySettings: 1
     autoPauseGame: 1
     editEventSystem: 1
@@ -369,10 +398,10 @@ MonoBehaviour:
     loadSceneIfSDKLate: 0
     loadSceneIndex: 0
     initDelaySimulation: 0
-    buildNumber: 0
+    buildNumber: 52
   Simulation:
     device: 0
-    language: ru
+    language: eng
     advIntervalSimulation: 60
     durationAdv: 0.5
     loadAdv: 0

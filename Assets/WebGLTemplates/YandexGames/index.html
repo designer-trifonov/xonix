@@ -115,6 +115,14 @@
         let isPausedGame = false;
         const NO_DATA = 'no data';
 
+        window.addEventListener('unhandledrejection', function (event) {
+            var msg = event.reason && (event.reason.message || String(event.reason));
+            if (msg && msg.includes('404')) {
+                event.preventDefault();
+                console.warn('[YG] Unhandled 404 rejection suppressed:', msg);
+            }
+        });
+
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('visibilitychange', () => SetVisibility(!document.hidden));
         window.addEventListener('blur', () => SetVisibility(false));

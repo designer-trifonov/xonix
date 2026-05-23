@@ -7,8 +7,9 @@ namespace HippoGame.Ball
     /// Движение шара, отскок от стен и залитых пикселей, попадание в гиппо и трейл.
     public class BallController : MonoBehaviour, IBallController
     {
-        public bool    IsAlive  => _active;
-        public Vector3 Position => transform.position;
+        public bool    IsAlive   => _active;
+        public Vector3 Position  => transform.position;
+        public Vector2 Direction => _direction;
 
         public event System.Action OnBounce;
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using YG;
 using HippoGame.UI;
 using HippoGame.Interfaces;
 
@@ -16,13 +17,21 @@ namespace HippoGame.Core
         [SerializeField] private UnityEngine.UI.Button        _mainMenuButton;
 
         private readonly List<Action> _initCallbacks = new();
-        private IGameState       _gameState;
-        private GameSessionSaver _saver;
 
-        public void Inject(IGameState gameState, GameSessionSaver saver = null)
+        private IGameState         _gameState;
+        private ISaveManager       _saveManager;
+        private ISnapshotCollector _snapshotCollector;
+        private IGameRestorer      _restorer;
+
+        public void Inject(IGameState gameState,
+            ISaveManager saveManager = null,
+            ISnapshotCollector snapshotCollector = null,
+            IGameRestorer restorer = null)
         {
-            _gameState = gameState;
-            _saver     = saver;
+            _gameState         = gameState;
+            _saveManager       = saveManager;
+            _snapshotCollector = snapshotCollector;
+            _restorer          = restorer;
         }
 
         public void SetMainMenuAction(Action action)
@@ -33,20 +42,35 @@ namespace HippoGame.Core
 
         public void RegisterInit(Action callback) => _initCallbacks.Add(callback);
 
-        private void Start()
-        {
-            SetVisible(false);
-        }
+        private void Start() => SetVisible(false);
+
+        // ── Точка входа ───────────────────────────────────────────────────────────────
 
         public void BeginFlow()
         {
-            if (_saver != null && _saver.HasSavedGame)
+            // YG2 SDK грузит сейвы асинхронно — если ещё не готов, ждём
+            if (!YG2.isSDKEnabled)
             {
-                _saver.RestoreToGameState();
+                Debug.Log("[GameStartController] YG2 SDK не готов — ждём onGetSDKData");
+                YG2.onGetSDKData += BeginFlow;
+                return;
+            }
+            YG2.onGetSDKData -= BeginFlow; // отписываемся на случай повторного вызова
+
+            if (_saveManager != null && _saveManager.HasSavedGame)
+            {
+                var snap = _saveManager.LoadSnapshot();
+
+                // Восстанавливаем GameState ДО инициализации систем
+                _gameState.RestoreSession(snap.Score, snap.Level, snap.Lives, (Difficulty)snap.Difficulty);
+
                 SetVisible(true);
                 RunInitCallbacks();
-                _saver.RestoreGridAndFill();
-                _saver.Activate();
+
+                // Восстанавливаем позиции/поле ПОСЛЕ инициализации
+                _restorer?.Restore(snap);
+
+                _snapshotCollector?.Activate();
                 Debug.Log("[GameStartController] Сессия восстановлена из сохранения");
                 return;
             }
@@ -64,15 +88,15 @@ namespace HippoGame.Core
 
         public void ShowDifficultyForRestart(Action onReady)
         {
-            SetVisible(false);   // прячем HUD — как будто только зашли
+            SetVisible(false);
 
             if (_difficultySelect != null)
             {
                 void Handler(Difficulty d)
                 {
-                    _difficultySelect.OnDifficultySelected -= Handler; // отписываемся сразу
+                    _difficultySelect.OnDifficultySelected -= Handler;
                     _gameState?.SetDifficulty(d);
-                    SetVisible(true);  // возвращаем HUD перед стартом
+                    SetVisible(true);
                     onReady?.Invoke();
                 }
                 _difficultySelect.OnDifficultySelected += Handler;
@@ -85,7 +109,8 @@ namespace HippoGame.Core
             }
         }
 
-        // Правила закрыты — показываем выбор сложности
+        // ── Приватный поток ───────────────────────────────────────────────────────────
+
         private void OnRulesClosed()
         {
             if (_difficultySelect != null)
@@ -99,14 +124,13 @@ namespace HippoGame.Core
             }
         }
 
-        // Сложность выбрана — применяем и запускаем игру (один раз!)
         private void OnDifficultyChosen(Difficulty d)
         {
-            _difficultySelect.OnDifficultySelected -= OnDifficultyChosen; // отписываемся сразу
+            _difficultySelect.OnDifficultySelected -= OnDifficultyChosen;
             _gameState?.SetDifficulty(d);
             SetVisible(true);
             RunInitCallbacks();
-            _saver?.Activate();
+            _snapshotCollector?.Activate();
             Debug.Log($"[GameStartController] Игра запущена | сложность={d}");
         }
 

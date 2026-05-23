@@ -16,19 +16,24 @@ namespace HippoGame.UI
         [SerializeField] private Button _removeBallButton;
         [SerializeField] private Button _slowBallsButton;
 
+        [Header("Confirm")]
+        [SerializeField] private AdConfirmPopup _confirmPopup;
+
         private IGameState    _gameState;
         private IBallSpawner  _ballSpawner;
         private IAdService    _adService;
         private IPauseService _pause;
+        private IGameLogger   _log;
         private bool          _adInProgress;
         private bool          _isOpen;
 
-        public void Inject(IGameState gameState, IBallSpawner ballSpawner, IAdService adService, IPauseService pause)
+        public void Inject(IGameState gameState, IBallSpawner ballSpawner, IAdService adService, IPauseService pause, IGameLogger log = null)
         {
             _gameState   = gameState;
             _ballSpawner = ballSpawner;
             _adService   = adService;
             _pause       = pause;
+            _log         = log;
         }
 
         private void Awake()
@@ -37,9 +42,9 @@ namespace HippoGame.UI
             _openShopButton.onClick.AddListener(ToggleShop);
             if (_closeShopButton != null)
                 _closeShopButton.onClick.AddListener(CloseShop);
-            _addLifeButton.onClick.AddListener(()    => WatchAd(ApplyAddLife,    "add_life"));
-            _removeBallButton.onClick.AddListener(() => WatchAd(ApplyRemoveBall, "remove_ball"));
-            _slowBallsButton.onClick.AddListener(()  => WatchAd(ApplySlowBalls,  "slow_balls"));
+            _addLifeButton.onClick.AddListener(()    => Confirm(() => WatchAd(ApplyAddLife,    "add_life")));
+            _removeBallButton.onClick.AddListener(() => Confirm(() => WatchAd(ApplyRemoveBall, "remove_ball")));
+            _slowBallsButton.onClick.AddListener(()  => Confirm(() => WatchAd(ApplySlowBalls,  "slow_balls")));
         }
 
         private void ToggleShop()
@@ -66,21 +71,31 @@ namespace HippoGame.UI
             SetAllButtonsInteractable(true);
         }
 
+        private void Confirm(System.Action onConfirm)
+        {
+            _log?.Log($"[Shop] Confirm | confirmPopup={_confirmPopup != null}");
+            if (_confirmPopup != null)
+                _confirmPopup.Show(onConfirm);
+            else
+                onConfirm?.Invoke();
+        }
+
         private void WatchAd(System.Action onComplete, string advId)
         {
+            _log?.Log($"[Shop] WatchAd '{advId}' | adInProgress={_adInProgress} isAdShowing={_adService.IsAdShowing}");
             if (_adInProgress || _adService.IsAdShowing)
             {
-                Debug.Log($"[Shop] WatchAd '{advId}' — пропущено");
+                _log?.Log($"[Shop] WatchAd '{advId}' — пропущено (уже идёт)");
                 return;
             }
 
-            Debug.Log($"[Shop] WatchAd '{advId}' — запрос рекламы");
+            _log?.Log($"[Shop] WatchAd '{advId}' — запуск рекламы");
             _adInProgress = true;
             CloseShop();
 
             _adService.ShowRewarded(advId, () =>
             {
-                Debug.Log($"[Shop] Награда получена за '{advId}'");
+                _log?.Log($"[Shop] Награда получена за '{advId}'");
                 onComplete?.Invoke();
             });
         }
@@ -91,7 +106,7 @@ namespace HippoGame.UI
         private void ApplyRemoveBall()
         {
             if (!_ballSpawner.RemoveOneBall())
-                Debug.Log("[ShopUIController] RemoveOneBall: уже минимум шаров");
+                _log?.Log("[Shop] RemoveOneBall: уже минимум шаров");
         }
 
         private void SetAllButtonsInteractable(bool value)

@@ -7,7 +7,7 @@ using static HippoGame.Grid.GridUtils;
 namespace HippoGame.Core
 {
     /// Логика смены уровней, сброс поля, проверка победы и поражения.
-    public class LevelManager
+    public class LevelManager : ILevelManager
     {
         private IGameState           _gameState;
         private IGridService         _grid;

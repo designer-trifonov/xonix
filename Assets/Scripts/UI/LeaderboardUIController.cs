@@ -22,20 +22,10 @@ namespace HippoGame.UI
 
         // ─── Инициализация ───────────────────────────────────────────────
 
-        public void Inject(IGameState gameState)
-        {
-            _gameState = gameState;
-        }
+        public void Inject(IGameState gameState) => _gameState = gameState;
 
-        private void OnEnable()
-        {
-            YG2.onGetLeaderboard += OnLeaderboardReceived;
-        }
-
-        private void OnDisable()
-        {
-            YG2.onGetLeaderboard -= OnLeaderboardReceived;
-        }
+        private void OnEnable()  => YG2.onGetLeaderboard += OnLeaderboardReceived;
+        private void OnDisable() => YG2.onGetLeaderboard -= OnLeaderboardReceived;
 
         private void Awake()
         {
@@ -43,107 +33,111 @@ namespace HippoGame.UI
             ClearSlots();
         }
 
-        // Вызывается при старте игры — показывает панель и грузит таблицу
+        /// Вызывается при старте и рестарте игры.
         public void Initialize()
         {
-            _isGameOver = false;
+            _isGameOver   = false;
+            _pendingScore = 0;
             _panel.SetActive(true);
-            if (YG2.player.auth)
-                YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
-        }
-
-        // ─── Game Over ───────────────────────────────────────────────────
-
-        // Вызывается после проигрыша
-        public void Show()
-        {
-            _isGameOver   = true;
-            _pendingScore = _gameState?.Score ?? 0;
 
             if (YG2.player.auth)
             {
-                if (SaveBestScoreLocally(_pendingScore))
-                {
-                    YG2.SetLeaderboard(LB_NAME, _pendingScore);
-                    Debug.Log($"[Leaderboard] Новый рекорд {_pendingScore} — отправили в таблицу");
-                }
-                else
-                {
-                    Debug.Log($"[Leaderboard] Счёт {_pendingScore} не лучше рекорда — не отправляем");
-                }
-
-                ClearSlots();
+                // Не чистим — старые слоты остаются пока грузятся новые данные
+                // OnLeaderboardReceived сам почистит и перерисует
                 YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
             }
             else
             {
-                Debug.Log("[Leaderboard] Игрок не авторизован — таблица пропущена");
-                AppendPlayerSlot();
+                // Не авторизован: всегда показываем лучший счёт
+                RefreshUnauthSlot();
             }
         }
 
-        // Возвращает true если новый счёт лучше сохранённого
-        private bool SaveBestScoreLocally(int score)
+        // ─── Game Over ───────────────────────────────────────────────────
+
+        public void Show()
         {
-            int saved = YG2.iPlatform.GetInt(KEY_BEST_SCORE, 0);
-            if (score > saved)
+            _isGameOver   = true;
+            _pendingScore = _gameState?.Score ?? 0;
+            SaveBestScoreLocally(_pendingScore);
+
+            if (YG2.player.auth)
             {
-                YG2.iPlatform.SetInt(KEY_BEST_SCORE, score);
-                if (YG2.player.auth)
-                    YG2.SaveProgress();
-                return true;
+                YG2.SetLeaderboard(LB_NAME, GetBestScoreLocally());
+                ClearSlots();
+                YG2.GetLeaderboard(LB_NAME, QUANTITY_TOP, QUANTITY_AROUND, "nonePhoto");
+                Debug.Log($"[Leaderboard] Game over | счёт={_pendingScore} рекорд={GetBestScoreLocally()}");
             }
-            return false;
+            else
+            {
+                RefreshUnauthSlot();
+                Debug.Log($"[Leaderboard] Не авторизован | рекорд={GetBestScoreLocally()}");
+            }
         }
 
-        private int GetBestScoreLocally() => YG2.iPlatform.GetInt(KEY_BEST_SCORE, 0);
+        public void Hide() => _panel.SetActive(false);
 
-        public void Hide()
-        {
-            _panel.SetActive(false);
-        }
-
-        // ─── Получение данных ────────────────────────────────────────────
+        // ─── Получение данных (только авторизованные) ────────────────────
 
         private void OnLeaderboardReceived(LBData lbData)
         {
-            if (lbData.technoName != LB_NAME)
-                return;
+            if (lbData.technoName != LB_NAME) return;
 
             ClearSlots();
 
-            // Рендерим топ-9
-            bool playerFound = false;
-            string myName    = YG2.player.name;
+            bool   playerFound = false;
+            string myName      = YG2.player.name;
 
             for (int i = 0; i < lbData.players.Length; i++)
             {
-                var player = lbData.players[i];
-                var slot   = Instantiate(_slotPrefab, _slotsContainer);
-                slot.Setup(player.rank, player.name, player.score);
+                var  player    = lbData.players[i];
+                if (player.score <= 0) continue;
 
-                if (player.name == myName)
-                    playerFound = true;
+                bool isMe      = player.name == myName;
+                int  showScore = isMe
+                    ? Mathf.Max(player.score, GetBestScoreLocally())
+                    : player.score;
+
+                Instantiate(_slotPrefab, _slotsContainer)
+                    .Setup(player.rank, player.name, showScore);
+
+                if (isMe) playerFound = true;
             }
 
-            // Добавляем слот только если нас нет в топ-9
+            // Своего слота нет в топ — вешаем последним с лучшим счётом
             if (!playerFound)
                 AppendPlayerSlot();
         }
 
-        // Всегда добавляем слот игрока последним (10-е место визуально)
-        private void AppendPlayerSlot()
-        {
-            string name        = YG2.player.name;
-            int    currentScore = _isGameOver ? _pendingScore : (_gameState?.Score ?? 0);
-            int    score       = Mathf.Max(currentScore, GetBestScoreLocally());
+        // ─── Неавторизованный ────────────────────────────────────────────
 
-            var slot = Instantiate(_slotPrefab, _slotsContainer);
-            slot.Setup(0, name, score);
-            Debug.Log($"[Leaderboard] Добавлен слот игрока: {name} | {score}");
+        /// Очищает и показывает единственный слот с лучшим счётом игрока.
+        private void RefreshUnauthSlot()
+        {
+            ClearSlots();
+            int best = GetBestScoreLocally();
+            if (best > 0)
+                AppendPlayerSlot();
         }
 
         // ─── Утилиты ─────────────────────────────────────────────────────
+
+        private void AppendPlayerSlot()
+        {
+            int score = Mathf.Max(_pendingScore, GetBestScoreLocally());
+            Instantiate(_slotPrefab, _slotsContainer)
+                .Setup(0, YG2.player.name, score);
+            Debug.Log($"[Leaderboard] Слот игрока: {YG2.player.name} | {score}");
+        }
+
+        private void SaveBestScoreLocally(int score)
+        {
+            if (score <= GetBestScoreLocally()) return;
+            YG2.iPlatform.SetInt(KEY_BEST_SCORE, score);
+            YG2.SaveProgress(); // локально всегда, в облако только если авторизован
+        }
+
+        private int GetBestScoreLocally() => YG2.iPlatform.GetInt(KEY_BEST_SCORE, 0);
 
         private void ClearSlots()
         {

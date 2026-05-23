@@ -193,6 +193,18 @@ namespace HippoGame.Hippo
             OnHit?.Invoke();
         }
 
+        public void RestoreDrawingState(Vector2Int lastCell, bool isDrawing, IReadOnlyList<Vector2Int> trailPoints)
+        {
+            _lastCell         = lastCell;
+            _segmentStartCell = lastCell;
+            _isDrawing        = isDrawing;
+            _hitInProgress    = false;
+            _trail.Clear();
+            foreach (var pt in trailPoints)
+                _trail.AddPoint(pt);
+            _logger?.Log($"[HippoGridInteractor] RestoreDrawingState: isDrawing={isDrawing} trail={trailPoints.Count} pts");
+        }
+
         public void ResetState(Vector3 hippoPosition)
         {
             _logger?.Log("[HippoGridInteractor] ResetState");

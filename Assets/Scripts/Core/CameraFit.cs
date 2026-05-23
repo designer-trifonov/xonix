@@ -23,6 +23,7 @@ namespace HippoGame.Core
         private void Awake()
         {
             _camera = GetComponent<Camera>();
+            _camera.orthographic = true;          // 2D-режим, всегда
             if (_header != null)
                 _headerDefaultPos = _header.anchoredPosition;
         }
@@ -46,9 +47,7 @@ namespace HippoGame.Core
 
             float aspect = (float)Screen.width / Screen.height;
 
-            // Минимальный orthographicSize чтобы влезла высота
             float fitH = zoneH / 2f;
-            // Минимальный orthographicSize чтобы влезла ширина
             float fitW = (zoneW / 2f) / aspect;
 
             _camera.orthographicSize = Mathf.Max(fitH, fitW);

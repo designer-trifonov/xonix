@@ -89,6 +89,36 @@ namespace HippoGame.Ball
             return positions;
         }
 
+        public IReadOnlyList<(Vector2 pos, Vector2 dir)> GetBallsData()
+        {
+            var result = new List<(Vector2, Vector2)>(_balls.Count);
+            foreach (var b in _balls)
+                if (b.IsAlive) result.Add(((Vector2)b.Position, b.Direction));
+            return result;
+        }
+
+        public float GetCurrentSpeed() => _currentBallSpeed;
+
+        public void SpawnBallsAtData(IReadOnlyList<(Vector2 pos, Vector2 dir)> data, float speed)
+        {
+            ClearBalls();
+            _currentBallSpeed  = speed;
+            _originalBallSpeed = speed;
+            Rect bounds = _boundary.GetBounds();
+            Debug.Log($"[BallSpawner] SpawnBallsAtData count={data.Count} speed={speed:F2}");
+
+            for (int i = 0; i < data.Count; i++)
+            {
+                BallController ball = _pool.Get();
+                ball.transform.position = new Vector3(data[i].pos.x, data[i].pos.y, -0.5f);
+                ball.Init(data[i].dir, speed, bounds, _grid, _hippo, _interactable);
+                ball.OnBounce += ForwardBounce;
+                ball.gameObject.SetActive(true);
+                _balls.Add(ball);
+                Debug.Log($"[BallSpawner] RestoreBall_{i} в ({data[i].pos.x:F2},{data[i].pos.y:F2}) dir=({data[i].dir.x:F2},{data[i].dir.y:F2})");
+            }
+        }
+
         public bool RemoveOneBall()
         {
             for (int i = _balls.Count - 1; i >= 0; i--)

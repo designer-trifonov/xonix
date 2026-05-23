@@ -38,7 +38,6 @@ namespace HippoGame.UI
         {
             if (_rt == null) return;
 
-            // Find the root Canvas with a CanvasScaler to get reference resolution
             Canvas rootCanvas = GetRootCanvas();
             CanvasScaler scaler = rootCanvas != null ? rootCanvas.GetComponent<CanvasScaler>() : null;
 
@@ -46,27 +45,22 @@ namespace HippoGame.UI
 
             if (scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize)
             {
-                // Match Width (matchWidthOrHeight == 0): canvas width is always referenceResolution.x
-                // canvas height scales with screen aspect ratio
                 float refW = scaler.referenceResolution.x;
                 float refH = scaler.referenceResolution.y;
                 float screenAspect = (float)Screen.width / Screen.height;
 
                 if (scaler.matchWidthOrHeight < 0.001f)
                 {
-                    // Match width
                     canvasW = refW;
                     canvasH = refW / screenAspect;
                 }
                 else if (scaler.matchWidthOrHeight > 0.999f)
                 {
-                    // Match height
                     canvasH = refH;
                     canvasW = refH * screenAspect;
                 }
                 else
                 {
-                    // Mixed - use log-space blend (same as Unity)
                     float logW = Mathf.Log(Screen.width  / refW, 2f);
                     float logH = Mathf.Log(Screen.height / refH, 2f);
                     float logScale = Mathf.Lerp(logW, logH, scaler.matchWidthOrHeight);
@@ -77,7 +71,6 @@ namespace HippoGame.UI
             }
             else
             {
-                // Fallback: use RectTransform of parent if available, else screen pixels
                 RectTransform parentRT = _rt.parent as RectTransform;
                 if (parentRT != null)
                 {

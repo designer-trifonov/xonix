@@ -2,9 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using HippoGame.Core;
-using HippoGame.Ball;
-using HippoGame.Hippo;
+using HippoGame.Interfaces;
 
 namespace HippoGame.Audio
 {
@@ -15,7 +13,7 @@ namespace HippoGame.Audio
     ///  - Когда играет звук начала уровня или проигрыша — музыка ВЫКЛЮЧАЕТСЯ.
     ///  - После звука начала уровня — музыка возобновляется.
     ///  - После звука проигрыша — музыка остаётся выключенной.
-    public class AudioService : MonoBehaviour
+    public class AudioService : MonoBehaviour, IAudioService
     {
         [Serializable]
         private struct Sound
@@ -62,9 +60,9 @@ namespace HippoGame.Audio
         }
 
         // ── Инициализация ────────────────────────────────────────────────────
-        public void Initialize(LevelManager        levelManager,
-                               BallSpawner         ballSpawner,
-                               HippoGridInteractor hippoGridInteractor)
+        public void Initialize(ILevelManager        levelManager,
+                               IBallSpawner         ballSpawner,
+                               IHippoGridInteractor hippoGridInteractor)
         {
             levelManager.OnLevelStarted      += OnLevelStarted;
             levelManager.OnGameOver          += OnGameOver;

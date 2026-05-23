@@ -8,6 +8,7 @@ using HippoGame.Ball;
 using HippoGame.FX;
 using HippoGame.Trail;
 using HippoGame.Ads;
+using UnityEngine;
 
 namespace HippoGame.Core
 {
@@ -23,7 +24,8 @@ namespace HippoGame.Core
             HippoGridInteractor  hippoGridInteractor,
             ParticleEffectsService particleEffects,
             BallSpawner          ballSpawner,
-            AdController         adController)
+            AdController         adController,
+            TrailLineRenderer    trailLineRenderer = null)
         {
             var container = new DiContainer();
 
@@ -59,7 +61,17 @@ namespace HippoGame.Core
             if (particleEffects != null)
                 container.Register<IParticleService>(particleEffects);
 
-            container.Register<LevelManager>(new LevelManager());
+            if (trailLineRenderer != null)
+                container.Register<ITrailRenderer>(trailLineRenderer);
+
+            var levelManager = new LevelManager();
+            container.Register<LevelManager>(levelManager);
+            container.Register<ILevelManager>(levelManager);
+
+            var restorer = new GameRestorer();
+            container.Register<GameRestorer>(restorer);
+            container.Register<IGameRestorer>(restorer);
+
             container.Register<IGameLogger>(new GameLogger());
             container.Register<IPauseService>(new PauseService());
 
