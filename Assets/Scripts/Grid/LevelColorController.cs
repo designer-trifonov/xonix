@@ -28,11 +28,17 @@ namespace HippoGame.Grid
 
         public void Inject(IGameState state)
         {
+            if (_gameState != null) _gameState.OnChanged -= OnStateChanged;
             _gameState           = state;
             _gameState.OnChanged += OnStateChanged;
         }
 
         public void Initialize() => ApplyColor();
+
+        private void OnDestroy()
+        {
+            if (_gameState != null) _gameState.OnChanged -= OnStateChanged;
+        }
 
         private void OnStateChanged()
         {

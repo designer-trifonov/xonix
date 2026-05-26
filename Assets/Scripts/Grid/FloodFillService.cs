@@ -49,15 +49,13 @@ namespace HippoGame.Grid
                     }
                     else
                     {
-                        // Шар на Border/Trail/Filled — ищем ближайшую Empty соседку
+                        // Шар на Border/Trail/Filled — берём ВСЕ пустые соседние ячейки,
+                        // чтобы защитить все смежные регионы, а не только первый найденный.
                         foreach (var dir in AllNeighbors)
                         {
                             var n = bc + dir;
                             if (grid.IsInBounds(n) && grid.GetCell(n.x, n.y) == CellState.Empty)
-                            {
                                 ballEmptyCells.Add(n);
-                                break;
-                            }
                         }
                     }
                 }

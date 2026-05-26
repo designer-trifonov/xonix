@@ -163,10 +163,13 @@ namespace HippoGame.Ball
         private Vector2 RandomInteriorPos(Rect bounds)
         {
             float margin = Mathf.Min(bounds.width, bounds.height) * 0.15f;
-            return new Vector2(
-                Random.Range(bounds.xMin + margin, bounds.xMax - margin),
-                Random.Range(bounds.yMin + margin, bounds.yMax - margin)
-            );
+            float minX   = bounds.xMin + margin;
+            float maxX   = bounds.xMax - margin;
+            float minY   = bounds.yMin + margin;
+            float maxY   = bounds.yMax - margin;
+            if (minX >= maxX) { minX = bounds.xMin; maxX = bounds.xMax; }
+            if (minY >= maxY) { minY = bounds.yMin; maxY = bounds.yMax; }
+            return new Vector2(Random.Range(minX, maxX), Random.Range(minY, maxY));
         }
     }
 }

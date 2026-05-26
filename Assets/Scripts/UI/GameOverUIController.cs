@@ -31,6 +31,7 @@ namespace HippoGame.UI
         public void Show()
         {
             _panel.SetActive(true);
+            SetButtonsInteractable(true);
             _pause?.Pause();
         }
 
@@ -42,6 +43,7 @@ namespace HippoGame.UI
 
         private void OnWatchAdClicked()
         {
+            SetButtonsInteractable(false);
             if (_confirmPopup != null)
             {
                 _confirmPopup.Show(() =>

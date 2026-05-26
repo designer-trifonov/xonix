@@ -90,8 +90,8 @@ namespace HippoGame.Core
             OnLevelComplete?.Invoke();
             _gameState.NextLevel();
             ResetField();
-            _levelTransitionPending = false;
             StartLevel();
+            _levelTransitionPending = false;
         }
 
         private void OnGameStateChanged()

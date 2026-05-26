@@ -86,7 +86,7 @@ namespace HippoGame.Hippo
 
         public void ResetMovement()
         {
-            _movement.Resume(transform);
+            _movement?.Resume(transform);
         }
 
         public void SetVisible(bool visible)
